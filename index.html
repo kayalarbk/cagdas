@@ -31,7 +31,7 @@
 
   .header {
     text-align: center;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
   }
 
   .header .eyebrow {
@@ -57,6 +57,34 @@
     margin: 0;
   }
 
+  /* Genel ilerleme çubuğu */
+  .overall-wrap {
+    max-width: 420px;
+    margin: 0 auto 20px;
+  }
+
+  .overall-progress {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: var(--teal-deep);
+    text-align: center;
+    margin-bottom: 6px;
+  }
+
+  .overall-bar {
+    height: 6px;
+    border-radius: 4px;
+    background: rgba(31,75,75,0.12);
+    overflow: hidden;
+  }
+
+  .overall-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--teal-deep);
+    transition: width 0.3s ease;
+  }
+
   .progress {
     font-family: Arial, sans-serif;
     text-align: center;
@@ -67,10 +95,32 @@
 
   .tabs {
     display: flex;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 8px;
+    padding: 2px 4px 10px;
+    scroll-snap-type: x proximity;
+  }
+
+  .tabs::-webkit-scrollbar {
+    height: 4px;
+  }
+  .tabs::-webkit-scrollbar-thumb {
+    background: rgba(31,75,75,0.2);
+    border-radius: 4px;
+  }
+
+  .tab-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    scroll-snap-align: center;
   }
 
   .tab {
@@ -83,6 +133,7 @@
     color: var(--teal-deep);
     cursor: pointer;
     transition: all 0.2s;
+    white-space: nowrap;
   }
 
   .tab.active {
@@ -91,11 +142,53 @@
     border-color: var(--teal-deep);
   }
 
+  .tab-badge {
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    color: #8a8578;
+    white-space: nowrap;
+  }
+
+  .tabs-hint {
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    color: #b0aa9a;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  /* Karıştır / filtre butonları */
+  .toolbar {
+    max-width: 420px;
+    margin: 0 auto 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tool-btn {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--teal-mid);
+    background: white;
+    color: var(--teal-mid);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tool-btn.active {
+    background: var(--teal-mid);
+    color: white;
+  }
+
   .deck {
     max-width: 420px;
     margin: 0 auto;
     position: relative;
-    height: 260px;
+    height: 280px;
   }
 
   .card {
@@ -152,6 +245,18 @@
     margin-bottom: 14px;
   }
 
+  .learned-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    color: #2E6B67;
+    background: rgba(46,107,103,0.12);
+    padding: 3px 8px;
+    border-radius: 10px;
+  }
+
   .word-en {
     font-size: 26px;
     font-weight: 700;
@@ -177,6 +282,25 @@
     font-size: 15px;
     line-height: 1.5;
     opacity: 0.95;
+    margin-bottom: 16px;
+  }
+
+  .learn-btn {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1.5px solid rgba(255,255,255,0.6);
+    background: transparent;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .learn-btn.is-learned {
+    background: rgba(255,255,255,0.9);
+    color: var(--teal-deep);
+    border-color: transparent;
   }
 
   .hint {
@@ -185,6 +309,20 @@
     color: #999;
     position: absolute;
     bottom: 10px;
+  }
+
+  .empty-state {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    font-size: 15px;
+    color: var(--teal-deep);
+    padding: 40px 20px;
+    line-height: 1.6;
+  }
+
+  .empty-sub {
+    font-size: 12px;
+    color: #8a8578;
   }
 
   .controls {
@@ -234,7 +372,19 @@
   <p>Karta dokun, çevir. Basit kelimeler ve cümleler.</p>
 </div>
 
+<div class="overall-wrap">
+  <div class="overall-progress" id="overallProgress">Toplam: 0/100 kelime öğrenildi (%0)</div>
+  <div class="overall-bar"><div class="overall-bar-fill" id="overallBarFill"></div></div>
+</div>
+
 <div class="tabs" id="tabs"></div>
+<div class="tabs-hint">← kategoriler arasında kaydır →</div>
+
+<div class="toolbar">
+  <button class="tool-btn" id="shuffleBtn">🔀 Karıştır</button>
+  <button class="tool-btn" id="filterBtn">🔎 Sadece öğrenilmeyenler</button>
+</div>
+
 <div class="progress" id="progress"></div>
 
 <div class="deck" id="deck"></div>
