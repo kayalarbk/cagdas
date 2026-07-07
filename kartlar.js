@@ -3719,6 +3719,13 @@ let currentIndex = 0;
 let flipped = false;
 let onlyUnlearned = false;   // sadece öğrenilmeyenleri göster filtresi
 
+// ---- Quiz durumu ----
+const QUIZ_LENGTH = 5;
+let quizQuestions = [];
+let quizIndex = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
 // ---- localStorage ile öğrenme takibi ----
 const STORAGE_KEY = "kartlar_learned_v1";
 
@@ -3766,10 +3773,12 @@ function totalCardCount() {
 const welcomeScreen = document.getElementById('welcome-screen');
 const categoriesScreen = document.getElementById('categories-screen');
 const cardsScreen = document.getElementById('cards-screen');
+const quizScreen = document.getElementById('quiz-screen');
 
 const startBtn = document.getElementById('startBtn');
 const homeBtn = document.getElementById('homeBtn');
 const categoriesBtn = document.getElementById('categoriesBtn');
+const quizBtn = document.getElementById('quizBtn');
 
 const categoriesListEl = document.getElementById('categoriesList');
 const overallProgressEl = document.getElementById('overallProgress');
@@ -3783,7 +3792,17 @@ const nextBtn = document.getElementById('nextBtn');
 const shuffleBtn = document.getElementById('shuffleBtn');
 const filterBtn = document.getElementById('filterBtn');
 
-const screens = { welcome: welcomeScreen, categories: categoriesScreen, cards: cardsScreen };
+const quizProgressEl = document.getElementById('quizProgress');
+const quizQuestionArea = document.getElementById('quiz-question-area');
+const quizResultArea = document.getElementById('quiz-result-area');
+const quizSentenceEl = document.getElementById('quizSentence');
+const quizOptionsEl = document.getElementById('quizOptions');
+const quizNextBtn = document.getElementById('quizNextBtn');
+const quizResultTitleEl = document.getElementById('quizResultTitle');
+const quizResultTextEl = document.getElementById('quizResultText');
+const quizBackBtn = document.getElementById('quizBackBtn');
+
+const screens = { welcome: welcomeScreen, categories: categoriesScreen, cards: cardsScreen, quiz: quizScreen };
 
 // ---- Ekran geçişleri ----
 function showScreen(name) {
@@ -3892,7 +3911,7 @@ function renderCard() {
           <div class="word-tr">${card.tr}</div>
           <div class="sentence-tr">${card.trS}</div>
           <button class="learn-btn ${learned ? 'is-learned' : ''}" id="learnBtn">
-            ${learned ? '✓ Öğrenildi' : 'Öğrendim olarak işaretle'}
+            ${learned ? 'Öğrenildi' : 'Öğrendim olarak işaretle'}
           </button>
         </div>
       </div>
@@ -3934,7 +3953,7 @@ function renderCardScreen() {
   renderCard();
   if (filterBtn) {
     filterBtn.classList.toggle('active', onlyUnlearned);
-    filterBtn.textContent = onlyUnlearned ? '🔎 Tümünü göster' : '🔎 Sadece öğrenilmeyenler';
+    filterBtn.textContent = onlyUnlearned ? 'Tümünü göster' : 'Sadece öğrenilmeyenler';
   }
 }
 
@@ -3982,5 +4001,154 @@ if (filterBtn) {
     renderCardScreen();
   };
 }
+
+// ==================================================================
+// ---- QUIZ MODU: Boşluk Doldurma ----
+// ==================================================================
+
+// Bir kartın örnek cümlesinde hedef kelimeyi/öbeği bulup boşlukla değiştirir.
+// Strateji: 1) tam öbek eşleşmesi  2) son kelimeye göre eşleşme (çekim farkları için)
+// 3) yedek: cümledeki son kelimeyi boşluk yap
+function buildBlankSentence(card) {
+  const sentence = card.enS;
+  const phrase = card.en;
+  const lowerSentence = sentence.toLowerCase();
+  const lowerPhrase = phrase.toLowerCase();
+
+  // 1) Tam öbek eşleşmesi
+  const idx = lowerSentence.indexOf(lowerPhrase);
+  if (idx !== -1) {
+    return sentence.slice(0, idx) + '_______' + sentence.slice(idx + phrase.length);
+  }
+
+  // 2) Son kelimeye göre eşleşme (fiil çekimi farklı olabilir: "get" -> "got" vb.)
+  const words = phrase.split(' ');
+  const lastWord = words[words.length - 1].toLowerCase();
+  const tokens = sentence.split(/(\s+)/);
+
+  const tryMatch = (exact) => {
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+      const core = token.replace(/[^a-zA-ZçğıöşüÇĞİÖŞÜ']/g, '');
+      if (!core) continue;
+      const coreLower = core.toLowerCase();
+      const isMatch = exact ? coreLower === lastWord : coreLower.includes(lastWord);
+      if (isMatch) {
+        tokens[i] = token.replace(core, '_______');
+        return tokens.join('');
+      }
+    }
+    return null;
+  };
+
+  let result = tryMatch(true);
+  if (result) return result;
+  result = tryMatch(false);
+  if (result) return result;
+
+  // 3) Son çare: cümledeki son kelimeyi boşluk yap
+  const fallback = sentence.split(' ');
+  const lastIdx = fallback.length - 1;
+  fallback[lastIdx] = fallback[lastIdx].replace(/[a-zA-Zçğıöşü]+/, '_______');
+  return fallback.join(' ');
+}
+
+function getDistractors(correctCard) {
+  const others = data[currentTab].cards.filter(c => c.en !== correctCard.en);
+  return shuffleArray([...others]).slice(0, 3);
+}
+
+function startQuiz() {
+  if (!currentTab) return;
+  const pool = shuffleArray([...data[currentTab].cards]);
+  quizQuestions = pool.slice(0, Math.min(QUIZ_LENGTH, pool.length));
+  quizIndex = 0;
+  quizScore = 0;
+
+  quizQuestionArea.classList.remove('hidden');
+  quizResultArea.classList.add('hidden');
+
+  showScreen('quiz');
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+  quizAnswered = false;
+  const card = quizQuestions[quizIndex];
+
+  quizProgressEl.textContent = `Soru ${quizIndex + 1} / ${quizQuestions.length}`;
+  quizSentenceEl.textContent = buildBlankSentence(card);
+
+  const distractors = getDistractors(card);
+  const options = shuffleArray([card, ...distractors]);
+
+  quizOptionsEl.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option-btn';
+    btn.textContent = opt.en;
+    btn.onclick = () => handleQuizAnswer(btn, opt, card);
+    quizOptionsEl.appendChild(btn);
+  });
+
+  quizNextBtn.classList.add('hidden');
+}
+
+function handleQuizAnswer(btn, chosen, correctCard) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+
+  const allBtns = quizOptionsEl.querySelectorAll('.quiz-option-btn');
+  allBtns.forEach(b => b.classList.add('disabled'));
+
+  if (chosen.en === correctCard.en) {
+    btn.classList.add('correct');
+    quizScore++;
+    setTimeout(() => {
+      advanceQuiz();
+    }, 1000);
+  } else {
+    btn.classList.add('wrong');
+    allBtns.forEach(b => {
+      if (b.textContent === correctCard.en) {
+        b.classList.add('correct');
+      } else if (b !== btn) {
+        b.classList.add('muted');
+      }
+    });
+    quizNextBtn.classList.remove('hidden');
+  }
+}
+
+function advanceQuiz() {
+  quizIndex++;
+  if (quizIndex >= quizQuestions.length) {
+    showQuizResult();
+  } else {
+    renderQuizQuestion();
+  }
+}
+
+function showQuizResult() {
+  quizQuestionArea.classList.add('hidden');
+  quizResultArea.classList.remove('hidden');
+
+  const total = quizQuestions.length;
+  let title;
+  if (quizScore === total) title = 'Mükemmel!';
+  else if (quizScore >= total * 0.6) title = 'Tebrikler!';
+  else title = 'İyi Deneme!';
+
+  quizResultTitleEl.textContent = title;
+  quizResultTextEl.textContent = `${total} soruda ${quizScore} doğru yaptın.`;
+}
+
+quizBtn.onclick = () => startQuiz();
+quizNextBtn.onclick = () => advanceQuiz();
+quizBackBtn.onclick = () => {
+  renderCategoriesList();
+  updateOverallProgress();
+  showScreen('categories');
+};
 
 // ---- Başlangıç: sadece Anasayfa görünür (HTML'de zaten öyle tanımlı) ----
