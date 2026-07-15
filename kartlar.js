@@ -3713,18 +3713,24 @@ const data = {
   }
 };
 
+// ==================================================================
+// Daily English — mantık katmanı
+// Savunmacı kodlama: eksik DOM elemanı tüm uygulamayı çökertmez.
+// ==================================================================
+
 // ---- Durum (state) ----
-let currentTab = null;       // aktif kategori (henüz seçilmedi = null)
+let currentTab = null;
 let currentIndex = 0;
 let flipped = false;
-let onlyUnlearned = false;   // sadece öğrenilmeyenleri göster filtresi
+let onlyUnlearned = false;
 
 // ---- Quiz durumu ----
 const QUIZ_LENGTH = 5;
-let quizQuestions = [];
+let quizQuestions = [];   // { card, type: 'blank' | 'meaning' }
 let quizIndex = 0;
 let quizScore = 0;
 let quizAnswered = false;
+let quizMistakes = [];    // yanlış yapılan kartlar
 
 // ---- localStorage ile öğrenme takibi ----
 const STORAGE_KEY = "kartlar_learned_v1";
@@ -3738,7 +3744,9 @@ function loadLearned() {
 }
 
 function saveLearned(map) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+  } catch { /* gizli mod vb. durumlarda sessizce geç */ }
 }
 
 let learnedMap = loadLearned();
@@ -3769,58 +3777,79 @@ function totalCardCount() {
   return Object.keys(data).reduce((sum, tab) => sum + data[tab].cards.length, 0);
 }
 
-// ---- DOM referansları ----
-const welcomeScreen = document.getElementById('welcome-screen');
-const categoriesScreen = document.getElementById('categories-screen');
-const cardsScreen = document.getElementById('cards-screen');
-const quizScreen = document.getElementById('quiz-screen');
+// ---- Telaffuz (Web Speech API) ----
+function speak(text) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US';
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  } catch { /* desteklenmeyen tarayıcıda sessizce geç */ }
+}
 
-const startBtn = document.getElementById('startBtn');
-const homeBtn = document.getElementById('homeBtn');
-const categoriesBtn = document.getElementById('categoriesBtn');
-const quizBtn = document.getElementById('quizBtn');
+// ---- DOM referansları (hepsi null olabilir; kullanım öncesi kontrol edilir) ----
+const $ = (id) => document.getElementById(id);
 
-const categoriesListEl = document.getElementById('categoriesList');
-const overallProgressEl = document.getElementById('overallProgress');
-const overallBarFillEl = document.getElementById('overallBarFill');
+const welcomeScreen = $('welcome-screen');
+const categoriesScreen = $('categories-screen');
+const cardsScreen = $('cards-screen');
+const quizScreen = $('quiz-screen');
 
-const deckEl = document.getElementById('deck');
-const counterEl = document.getElementById('counter');
-const progressEl = document.getElementById('progress');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-const shuffleBtn = document.getElementById('shuffleBtn');
-const filterBtn = document.getElementById('filterBtn');
+const startBtn = $('startBtn');
+const homeBtn = $('homeBtn');
+const categoriesBtn = $('categoriesBtn');
+const quizBtn = $('quizBtn');
 
-const quizProgressEl = document.getElementById('quizProgress');
-const quizQuestionArea = document.getElementById('quiz-question-area');
-const quizResultArea = document.getElementById('quiz-result-area');
-const quizSentenceEl = document.getElementById('quizSentence');
-const quizOptionsEl = document.getElementById('quizOptions');
-const quizNextBtn = document.getElementById('quizNextBtn');
-const quizResultTitleEl = document.getElementById('quizResultTitle');
-const quizResultTextEl = document.getElementById('quizResultText');
-const quizBackBtn = document.getElementById('quizBackBtn');
+const categoriesListEl = $('categoriesList');
+const overallProgressEl = $('overallProgress');
+const overallBarFillEl = $('overallBarFill');
 
-const screens = { welcome: welcomeScreen, categories: categoriesScreen, cards: cardsScreen, quiz: quizScreen };
+const deckEl = $('deck');
+const counterEl = $('counter');
+const progressEl = $('progress');
+const prevBtn = $('prevBtn');
+const nextBtn = $('nextBtn');
+const shuffleBtn = $('shuffleBtn');
+const filterBtn = $('filterBtn');
+
+const quizProgressEl = $('quizProgress');
+const quizQuestionArea = $('quiz-question-area');
+const quizResultArea = $('quiz-result-area');
+const quizSentenceEl = $('quizSentence');
+const quizHintEl = $('quizHint');
+const quizOptionsEl = $('quizOptions');
+const quizNextBtn = $('quizNextBtn');
+const quizResultTitleEl = $('quizResultTitle');
+const quizResultTextEl = $('quizResultText');
+const quizMistakesEl = $('quizMistakes');
+const quizBackBtn = $('quizBackBtn');
+const quizRetryBtn = $('quizRetryBtn');
+
+const screens = {};
+if (welcomeScreen) screens.welcome = welcomeScreen;
+if (categoriesScreen) screens.categories = categoriesScreen;
+if (cardsScreen) screens.cards = cardsScreen;
+if (quizScreen) screens.quiz = quizScreen;
 
 // ---- Ekran geçişleri ----
 function showScreen(name) {
+  if (!screens[name]) return;
   Object.values(screens).forEach(el => el.classList.add('hidden'));
   screens[name].classList.remove('hidden');
+  window.scrollTo(0, 0);
 }
 
-startBtn.onclick = () => {
+if (startBtn) startBtn.onclick = () => {
   renderCategoriesList();
   updateOverallProgress();
   showScreen('categories');
 };
 
-homeBtn.onclick = () => {
-  showScreen('welcome');
-};
+if (homeBtn) homeBtn.onclick = () => showScreen('welcome');
 
-categoriesBtn.onclick = () => {
+if (categoriesBtn) categoriesBtn.onclick = () => {
   renderCategoriesList();
   updateOverallProgress();
   showScreen('categories');
@@ -3828,6 +3857,7 @@ categoriesBtn.onclick = () => {
 
 // ---- Kategoriler ekranı: dikey liste ----
 function renderCategoriesList() {
+  if (!categoriesListEl) return;
   categoriesListEl.innerHTML = '';
   Object.keys(data).forEach(tab => {
     const total = data[tab].cards.length;
@@ -3871,21 +3901,21 @@ function getVisibleList() {
 }
 
 function renderCard() {
+  if (!deckEl || !currentTab) return;
   const list = getVisibleList();
   const color = data[currentTab].color;
 
-  // Filtre uygulanmış listede kart kalmadıysa
   if (list.length === 0) {
     deckEl.innerHTML = `
       <div class="empty-state">
-        🎉 Bu kategorideki tüm kelimeleri öğrendin!<br>
+        Bu kategorideki tüm kelimeleri öğrendin!<br>
         <span class="empty-sub">Filtreyi kapatıp tekrar göz atabilirsin.</span>
       </div>
     `;
-    counterEl.textContent = `0 / 0`;
-    progressEl.textContent = `${currentTab} — tamamlandı`;
-    prevBtn.disabled = true;
-    nextBtn.disabled = true;
+    if (counterEl) counterEl.textContent = `0 / 0`;
+    if (progressEl) progressEl.textContent = `${currentTab} — tamamlandı`;
+    if (prevBtn) prevBtn.disabled = true;
+    if (nextBtn) nextBtn.disabled = true;
     updateOverallProgress();
     return;
   }
@@ -3901,9 +3931,10 @@ function renderCard() {
       <div class="card-inner" id="cardInner">
         <div class="face face-front">
           <div class="time-tag" style="background:${color}22; color:${color};">${currentTab}</div>
-          ${learned ? '<div class="learned-badge">✓ öğrenildi</div>' : ''}
+          ${learned ? '<div class="learned-badge">Öğrenildi</div>' : ''}
           <div class="word-en">${card.en}</div>
           <div class="sentence-en">${card.enS}</div>
+          <button class="speak-btn" id="speakBtn" aria-label="Seslendir">Dinle</button>
           <div class="hint">dokun ve çevir</div>
         </div>
         <div class="face face-back">
@@ -3918,25 +3949,32 @@ function renderCard() {
     </div>
   `;
 
-  const inner = document.getElementById('cardInner');
+  const inner = $('cardInner');
+  if (!inner) return;
   if (flipped) inner.classList.add('flipped');
   inner.onclick = (e) => {
-    if (e.target.id === 'learnBtn') return; // buton tıklamasında kart çevirme tetiklenmesin
+    if (e.target.id === 'learnBtn' || e.target.id === 'speakBtn') return;
     flipped = !flipped;
     inner.classList.toggle('flipped');
   };
 
-  const learnBtn = document.getElementById('learnBtn');
-  learnBtn.onclick = (e) => {
+  const learnBtn = $('learnBtn');
+  if (learnBtn) learnBtn.onclick = (e) => {
     e.stopPropagation();
     toggleLearned(currentTab, card);
     renderCardScreen();
   };
 
-  counterEl.textContent = `${currentIndex + 1} / ${list.length}`;
-  progressEl.textContent = `${currentTab} — Kart ${currentIndex + 1}${onlyUnlearned ? ' (filtre: öğrenilmeyenler)' : ''}`;
-  prevBtn.disabled = currentIndex === 0;
-  nextBtn.disabled = currentIndex === list.length - 1;
+  const speakBtn = $('speakBtn');
+  if (speakBtn) speakBtn.onclick = (e) => {
+    e.stopPropagation();
+    speak(card.en + '. ' + card.enS);
+  };
+
+  if (counterEl) counterEl.textContent = `${currentIndex + 1} / ${list.length}`;
+  if (progressEl) progressEl.textContent = `${currentTab} — Kart ${currentIndex + 1}${onlyUnlearned ? ' (filtre: öğrenilmeyenler)' : ''}`;
+  if (prevBtn) prevBtn.disabled = currentIndex === 0;
+  if (nextBtn) nextBtn.disabled = currentIndex === list.length - 1;
 
   updateOverallProgress();
 }
@@ -3967,7 +4005,7 @@ function shuffleArray(arr) {
 }
 
 // ---- Kontroller ----
-prevBtn.onclick = () => {
+if (prevBtn) prevBtn.onclick = () => {
   if (currentIndex > 0) {
     currentIndex--;
     flipped = false;
@@ -3975,7 +4013,7 @@ prevBtn.onclick = () => {
   }
 };
 
-nextBtn.onclick = () => {
+if (nextBtn) nextBtn.onclick = () => {
   const list = getVisibleList();
   if (currentIndex < list.length - 1) {
     currentIndex++;
@@ -3984,31 +4022,27 @@ nextBtn.onclick = () => {
   }
 };
 
-if (shuffleBtn) {
-  shuffleBtn.onclick = () => {
-    shuffleArray(data[currentTab].cards);
-    currentIndex = 0;
-    flipped = false;
-    renderCardScreen();
-  };
-}
+if (shuffleBtn) shuffleBtn.onclick = () => {
+  if (!currentTab) return;
+  shuffleArray(data[currentTab].cards);
+  currentIndex = 0;
+  flipped = false;
+  renderCardScreen();
+};
 
-if (filterBtn) {
-  filterBtn.onclick = () => {
-    onlyUnlearned = !onlyUnlearned;
-    currentIndex = 0;
-    flipped = false;
-    renderCardScreen();
-  };
-}
+if (filterBtn) filterBtn.onclick = () => {
+  onlyUnlearned = !onlyUnlearned;
+  currentIndex = 0;
+  flipped = false;
+  renderCardScreen();
+};
 
 // ==================================================================
-// ---- QUIZ MODU: Boşluk Doldurma ----
+// ---- QUIZ MODU ----
+// İki soru tipi: 'blank' (boşluk doldurma) ve 'meaning' (Türkçe anlamdan
+// İngilizce kelime seçme). Karışık sırayla gelir.
 // ==================================================================
 
-// Bir kartın örnek cümlesinde hedef kelimeyi/öbeği bulup boşlukla değiştirir.
-// Strateji: 1) tam öbek eşleşmesi  2) son kelimeye göre eşleşme (çekim farkları için)
-// 3) yedek: cümledeki son kelimeyi boşluk yap
 function buildBlankSentence(card) {
   const sentence = card.enS;
   const phrase = card.en;
@@ -4021,7 +4055,7 @@ function buildBlankSentence(card) {
     return sentence.slice(0, idx) + '_______' + sentence.slice(idx + phrase.length);
   }
 
-  // 2) Son kelimeye göre eşleşme (fiil çekimi farklı olabilir: "get" -> "got" vb.)
+  // 2) Son kelimeye göre eşleşme (çekim farkları: get -> got vb.)
   const words = phrase.split(' ');
   const lastWord = words[words.length - 1].toLowerCase();
   const tokens = sentence.split(/(\s+)/);
@@ -4059,25 +4093,46 @@ function getDistractors(correctCard) {
 }
 
 function startQuiz() {
-  if (!currentTab) return;
+  if (!currentTab || !quizScreen) return;
   const pool = shuffleArray([...data[currentTab].cards]);
-  quizQuestions = pool.slice(0, Math.min(QUIZ_LENGTH, pool.length));
+  const selected = pool.slice(0, Math.min(QUIZ_LENGTH, pool.length));
+
+  // Soru tiplerini karışık ata: yarısı blank, yarısı meaning
+  quizQuestions = selected.map((card, i) => ({
+    card,
+    type: i % 2 === 0 ? 'blank' : 'meaning'
+  }));
+  shuffleArray(quizQuestions);
+
   quizIndex = 0;
   quizScore = 0;
+  quizMistakes = [];
 
-  quizQuestionArea.classList.remove('hidden');
-  quizResultArea.classList.add('hidden');
+  if (quizQuestionArea) quizQuestionArea.classList.remove('hidden');
+  if (quizResultArea) quizResultArea.classList.add('hidden');
 
   showScreen('quiz');
   renderQuizQuestion();
 }
 
 function renderQuizQuestion() {
+  if (!quizSentenceEl || !quizOptionsEl) return;
   quizAnswered = false;
-  const card = quizQuestions[quizIndex];
+  const q = quizQuestions[quizIndex];
+  const card = q.card;
 
-  quizProgressEl.textContent = `Soru ${quizIndex + 1} / ${quizQuestions.length}`;
-  quizSentenceEl.textContent = buildBlankSentence(card);
+  if (quizProgressEl) quizProgressEl.textContent = `Soru ${quizIndex + 1} / ${quizQuestions.length}`;
+
+  if (q.type === 'blank') {
+    quizSentenceEl.textContent = buildBlankSentence(card);
+    if (quizHintEl) {
+      quizHintEl.textContent = `İpucu: ${card.trS}`;
+      quizHintEl.classList.remove('hidden');
+    }
+  } else {
+    quizSentenceEl.textContent = `"${card.tr}" anlamına gelen kelime hangisi?`;
+    if (quizHintEl) quizHintEl.classList.add('hidden');
+  }
 
   const distractors = getDistractors(card);
   const options = shuffleArray([card, ...distractors]);
@@ -4091,7 +4146,7 @@ function renderQuizQuestion() {
     quizOptionsEl.appendChild(btn);
   });
 
-  quizNextBtn.classList.add('hidden');
+  if (quizNextBtn) quizNextBtn.classList.add('hidden');
 }
 
 function handleQuizAnswer(btn, chosen, correctCard) {
@@ -4104,11 +4159,11 @@ function handleQuizAnswer(btn, chosen, correctCard) {
   if (chosen.en === correctCard.en) {
     btn.classList.add('correct');
     quizScore++;
-    setTimeout(() => {
-      advanceQuiz();
-    }, 1000);
+    speak(correctCard.en);
+    setTimeout(() => advanceQuiz(), 1000);
   } else {
     btn.classList.add('wrong');
+    quizMistakes.push(correctCard);
     allBtns.forEach(b => {
       if (b.textContent === correctCard.en) {
         b.classList.add('correct');
@@ -4116,7 +4171,8 @@ function handleQuizAnswer(btn, chosen, correctCard) {
         b.classList.add('muted');
       }
     });
-    quizNextBtn.classList.remove('hidden');
+    speak(correctCard.en);
+    if (quizNextBtn) quizNextBtn.classList.remove('hidden');
   }
 }
 
@@ -4130,8 +4186,8 @@ function advanceQuiz() {
 }
 
 function showQuizResult() {
-  quizQuestionArea.classList.add('hidden');
-  quizResultArea.classList.remove('hidden');
+  if (quizQuestionArea) quizQuestionArea.classList.add('hidden');
+  if (quizResultArea) quizResultArea.classList.remove('hidden');
 
   const total = quizQuestions.length;
   let title;
@@ -4139,16 +4195,29 @@ function showQuizResult() {
   else if (quizScore >= total * 0.6) title = 'Tebrikler!';
   else title = 'İyi Deneme!';
 
-  quizResultTitleEl.textContent = title;
-  quizResultTextEl.textContent = `${total} soruda ${quizScore} doğru yaptın.`;
+  if (quizResultTitleEl) quizResultTitleEl.textContent = title;
+  if (quizResultTextEl) quizResultTextEl.textContent = `${total} soruda ${quizScore} doğru yaptın.`;
+
+  // Yanlış yapılan kelimeleri listele (tekrar çalışılması için)
+  if (quizMistakesEl) {
+    if (quizMistakes.length === 0) {
+      quizMistakesEl.innerHTML = '';
+      quizMistakesEl.classList.add('hidden');
+    } else {
+      quizMistakesEl.classList.remove('hidden');
+      quizMistakesEl.innerHTML = '<div class="quiz-mistakes-title">Tekrar çalışman gereken kelimeler:</div>' +
+        quizMistakes.map(c =>
+          `<div class="quiz-mistake-item"><span class="qm-en">${c.en}</span><span class="qm-tr">${c.tr}</span></div>`
+        ).join('');
+    }
+  }
 }
 
-quizBtn.onclick = () => startQuiz();
-quizNextBtn.onclick = () => advanceQuiz();
-quizBackBtn.onclick = () => {
+if (quizBtn) quizBtn.onclick = () => startQuiz();
+if (quizNextBtn) quizNextBtn.onclick = () => advanceQuiz();
+if (quizBackBtn) quizBackBtn.onclick = () => {
   renderCategoriesList();
   updateOverallProgress();
   showScreen('categories');
 };
-
-// ---- Başlangıç: sadece Anasayfa görünür (HTML'de zaten öyle tanımlı) ----
+if (quizRetryBtn) quizRetryBtn.onclick = () => startQuiz();

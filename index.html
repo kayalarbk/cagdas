@@ -561,6 +561,73 @@
     color: #6b6558;
     margin-bottom: 28px;
   }
+
+  .quiz-hint {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    color: #8a8578;
+    text-align: center;
+    margin-top: 14px;
+    font-style: italic;
+  }
+
+  .quiz-mistakes {
+    text-align: left;
+    margin-bottom: 24px;
+    border-top: 1px solid rgba(31,75,75,0.12);
+    padding-top: 18px;
+  }
+
+  .quiz-mistakes-title {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--wrong);
+    margin-bottom: 10px;
+  }
+
+  .quiz-mistake-item {
+    display: flex;
+    justify-content: space-between;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    padding: 7px 0;
+    border-bottom: 1px dashed rgba(31,75,75,0.10);
+  }
+
+  .qm-en {
+    font-weight: 700;
+    color: var(--teal-deep);
+  }
+
+  .qm-tr {
+    color: #6b6558;
+  }
+
+  .quiz-result-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .speak-btn {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(31,75,75,0.18);
+    background: rgba(31,75,75,0.06);
+    color: var(--teal-deep);
+    cursor: pointer;
+    margin-top: 14px;
+    transition: background-color 0.2s ease;
+  }
+
+  .speak-btn:hover {
+    background: rgba(31,75,75,0.12);
+  }
 </style>
 </head>
 <body>
@@ -618,13 +685,14 @@
   </div>
 </div>
 
-<!-- ============ EKRAN 4: QUIZ (boşluk doldurma) ============ -->
+<!-- ============ EKRAN 4: QUIZ (boşluk doldurma + anlam) ============ -->
 <div id="quiz-screen" class="screen hidden">
   <div class="progress" id="quizProgress"></div>
 
   <div id="quiz-question-area">
     <div class="quiz-card">
       <div class="quiz-sentence" id="quizSentence"></div>
+      <div class="quiz-hint hidden" id="quizHint"></div>
     </div>
     <div class="quiz-options" id="quizOptions"></div>
     <div class="quiz-footer">
@@ -636,7 +704,11 @@
     <div class="quiz-result-card">
       <div class="quiz-result-title" id="quizResultTitle"></div>
       <div class="quiz-result-text" id="quizResultText"></div>
-      <button class="btn-primary" id="quizBackBtn">Kategorilere Dön</button>
+      <div class="quiz-mistakes hidden" id="quizMistakes"></div>
+      <div class="quiz-result-actions">
+        <button class="nav-chip" id="quizRetryBtn">Tekrar Dene</button>
+        <button class="btn-primary" id="quizBackBtn">Kategorilere Dön</button>
+      </div>
     </div>
   </div>
 </div>
