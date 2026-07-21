@@ -44,9 +44,14 @@ function bindQuizControls() {
   }
 }
 
-/** İlgi alanı seçimini açar; kaydedince anasayfaya döner. */
+/** Alan ekle/çıkar: testi tekrarlatmadan yalnızca alan listesini açar. */
 function editInterests() {
-  openOnboarding(goHome);
+  openOnboarding(goHome, { mode: 'fields' });
+}
+
+/** Tanışma testini baştan çözdürür. */
+function retakeQuiz() {
+  openOnboarding(goHome, { mode: 'quiz' });
 }
 
 async function start() {
@@ -62,15 +67,17 @@ async function start() {
 
   bindChrome();
   bindOnboarding();
-  bindHome(editInterests);
+  bindHome(editInterests, retakeQuiz);
   bindCardControls();
   bindQuizControls();
   renderHeader();
 
+  // Alan seçmiş kullanıcı (eski sürümden gelenler dâhil) doğrudan anasayfaya girer;
+  // testi çözmemişse anasayfadaki çip onu tanışma testine çağırır.
   if (hasChosenInterests()) {
     goHome();
   } else {
-    openOnboarding(goHome);
+    openOnboarding(goHome, { mode: 'quiz' });
   }
 }
 

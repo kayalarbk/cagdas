@@ -29,19 +29,23 @@
 <!-- ============ EKRAN 1: İLGİ ALANI SEÇİMİ ============ -->
 <section id="onboarding-screen" class="screen hidden">
   <div class="onboarding-intro">
+    <div class="wizard-steps" id="wizardSteps"></div>
     <div class="onboarding-badge">Daily English</div>
-    <h1 class="onboarding-title">Neyi konuşmak istiyorsun?</h1>
-    <p class="onboarding-sub">
-      İlgilendiğin alanları seç — kelimeleri sana göre seçelim.
-      Sonradan istediğin zaman değiştirebilirsin.
+    <h1 class="onboarding-title" id="wizardTitle">Seni tanıyalım</h1>
+    <p class="onboarding-sub" id="wizardSub">
+      Birkaç soruyla sana uygun kelimeleri seçelim.
     </p>
   </div>
 
-  <div class="field-grid" id="interestGrid"></div>
+  <div class="option-list" id="wizardOptions"></div>
+  <div class="field-grid hidden" id="interestGrid"></div>
 
   <div class="onboarding-footer">
-    <p class="onboarding-count" id="interestCount">En az bir alan seç</p>
-    <button class="btn btn-primary btn-block" id="interestSaveBtn" disabled>Devam Et</button>
+    <p class="onboarding-count" id="interestCount"></p>
+    <div class="onboarding-actions">
+      <button class="btn btn-ghost hidden" id="wizardBackBtn">← Geri</button>
+      <button class="btn btn-primary btn-block" id="interestSaveBtn">Devam</button>
+    </div>
   </div>
 </section>
 
@@ -50,6 +54,7 @@
   <div class="greeting">
     <h1 id="greetingTitle">Merhaba</h1>
     <p id="greetingSub">Bugün birkaç kelime öğrenmeye ne dersin?</p>
+    <button class="profile-chip hidden" id="profileChip" title="Testi yeniden çöz"></button>
   </div>
 
   <!-- Günlük hedef kartı -->
@@ -84,13 +89,14 @@
   <!-- Seçili alanlar -->
   <div class="section-head">
     <h2>Alanların</h2>
-    <button class="link-btn" id="editInterestsBtn">Düzenle</button>
+    <button class="link-btn" id="editInterestsBtn">Alan ekle / çıkar</button>
   </div>
   <div class="field-list" id="homeFieldList"></div>
 
   <!-- Keşfedilmemiş alanlar -->
   <div class="section-head hidden" id="exploreHead">
     <h2>Keşfet</h2>
+    <span class="section-note">dokun ve ekle</span>
   </div>
   <div class="field-list field-list--muted" id="exploreFieldList"></div>
 </section>

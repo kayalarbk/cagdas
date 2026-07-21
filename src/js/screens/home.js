@@ -2,10 +2,12 @@
 
 import { el } from '../dom.js';
 import { getFieldMeta, getFields } from '../data/repository.js';
-import { getInterests } from '../store/interests.js';
+import { getInterests, setInterests } from '../store/interests.js';
+import { getLevelChoice, getProfileMeta, getRecommendedFields } from '../store/profile.js';
 import { getFieldProgress } from '../store/progress.js';
 import { getStats, setDailyGoal } from '../store/stats.js';
 import { renderHeader } from '../ui/header.js';
+import { toast } from '../ui/toast.js';
 import { openField } from './field.js';
 import { showScreen } from './navigation.js';
 
@@ -17,6 +19,31 @@ function greetingForHour(hour) {
   if (hour < 12) return 'Günaydın';
   if (hour < 18) return 'İyi günler';
   return 'İyi akşamlar';
+}
+
+/**
+ * Profil çipi: "🛠️ Mühendislik · İdare ederim" — dokununca test yeniden açılır.
+ * Testi hiç çözmemiş kullanıcıya (eski sürümden gelenlere) çağrı olarak görünür.
+ */
+function renderProfileChip() {
+  if (!el.profileChip) return;
+  el.profileChip.classList.remove('hidden');
+
+  const meta = getProfileMeta();
+  if (!meta) {
+    el.profileChip.classList.add('is-empty');
+    el.profileChip.innerHTML =
+      '<span aria-hidden="true">🎯</span> Seni tanıyalım' +
+      '<span class="profile-chip-edit" aria-hidden="true">testi çöz</span>';
+    return;
+  }
+
+  const level = getLevelChoice();
+  el.profileChip.classList.remove('is-empty');
+  el.profileChip.innerHTML =
+    `<span aria-hidden="true">${meta.icon}</span> ${meta.label}` +
+    (level ? `<span class="profile-chip-level">${level.label}</span>` : '') +
+    '<span class="profile-chip-edit" aria-hidden="true">değiştir</span>';
 }
 
 function renderGreeting(stats) {
@@ -55,8 +82,8 @@ function renderGoal(stats) {
   }
 }
 
-/** Bir alan satırı oluşturur. */
-function fieldRow(meta, { muted = false } = {}) {
+/** Bir alan satırı oluşturur. `muted` keşfet listesi içindir. */
+function fieldRow(meta, { muted = false, recommended = false } = {}) {
   const { learned, total, pct } = getFieldProgress(meta.id);
 
   const row = document.createElement('button');
@@ -69,6 +96,7 @@ function fieldRow(meta, { muted = false } = {}) {
       <span class="field-row-name">
         ${meta.name}
         ${pct === 100 ? '<span class="field-row-done">✓ tamam</span>' : ''}
+        ${recommended ? '<span class="field-row-tag">sana uygun</span>' : ''}
       </span>
       <span class="field-row-meta">
         ${
@@ -85,7 +113,23 @@ function fieldRow(meta, { muted = false } = {}) {
     muted ? `${meta.name}, ${total} kelime` : `${meta.name}, ${learned} / ${total} öğrenildi`
   );
   row.onclick = () => openField(meta.id);
-  return row;
+  if (!muted) return row;
+
+  // Keşfet satırları: alanı açmadan doğrudan listeye eklemek için "+" düğmesi.
+  const wrap = document.createElement('div');
+  wrap.className = 'field-row-wrap';
+  const add = document.createElement('button');
+  add.type = 'button';
+  add.className = 'field-add-btn';
+  add.textContent = '+ Ekle';
+  add.setAttribute('aria-label', `${meta.name} alanını ekle`);
+  add.onclick = () => {
+    setInterests([...getInterests(), meta.id]);
+    renderHome();
+    toast(`${meta.name} eklendi`, '➕');
+  };
+  wrap.append(row, add);
+  return wrap;
 }
 
 function renderFieldLists() {
@@ -99,11 +143,24 @@ function renderFieldLists() {
     });
   }
 
-  const others = getFields().filter((field) => !interests.includes(field.id));
+  // Keşfet: profile göre önerilenler üstte.
+  const recommended = getRecommendedFields();
+  const rank = (id) => {
+    const index = recommended.indexOf(id);
+    return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+  };
+  const others = getFields()
+    .filter((field) => !interests.includes(field.id))
+    .sort((a, b) => rank(a.id) - rank(b.id));
+
   if (el.exploreHead) el.exploreHead.classList.toggle('hidden', others.length === 0);
   if (el.exploreFieldList) {
     el.exploreFieldList.innerHTML = '';
-    others.forEach((meta) => el.exploreFieldList.appendChild(fieldRow(meta, { muted: true })));
+    others.forEach((meta) =>
+      el.exploreFieldList.appendChild(
+        fieldRow(meta, { muted: true, recommended: recommended.includes(meta.id) })
+      )
+    );
   }
 }
 
@@ -121,6 +178,7 @@ function nextFieldId() {
 
 export function renderHome() {
   const stats = getStats();
+  renderProfileChip();
   renderGreeting(stats);
   renderGoal(stats);
   renderFieldLists();
@@ -139,9 +197,10 @@ export function goHome() {
 }
 
 /**
- * @param {() => void} onEditInterests "Düzenle" tıklandığında çağrılır
+ * @param {() => void} onEditInterests alan ekle/çıkar bağlantısı
+ * @param {() => void} onRetakeQuiz profil çipi (testi yeniden çöz)
  */
-export function bindHome(onEditInterests) {
+export function bindHome(onEditInterests, onRetakeQuiz) {
   if (el.continueBtn) {
     el.continueBtn.onclick = () => {
       const target = nextFieldId();
@@ -150,6 +209,7 @@ export function bindHome(onEditInterests) {
   }
 
   if (el.editInterestsBtn) el.editInterestsBtn.onclick = onEditInterests;
+  if (el.profileChip) el.profileChip.onclick = onRetakeQuiz;
 
   if (el.goalSelect) {
     el.goalSelect.onchange = () => {

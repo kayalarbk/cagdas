@@ -1,0 +1,213 @@
+{
+  "id": "tip",
+  "name": "Tıp & Sağlık Bilimleri",
+  "icon": "🩺",
+  "color": "#E11D48",
+  "description": "Klinik dil, hasta iletişimi, tanı ve tedavi terimleri.",
+  "categories": [
+    {
+      "name": "Klinik Dil",
+      "color": "#9F1239",
+      "cards": [
+        {
+          "id": "tip-001",
+          "en": "take a patient's history",
+          "enS": "The doctor takes the patient's history first.",
+          "tr": "hastanın öyküsünü almak",
+          "trS": "Doktor önce hastanın öyküsünü alır.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-002",
+          "en": "make a diagnosis",
+          "enS": "It took two days to make a diagnosis.",
+          "tr": "teşhis koymak",
+          "trS": "Teşhis koymak iki gün sürdü.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-003",
+          "en": "prescribe medication",
+          "enS": "She prescribed medication for the pain.",
+          "tr": "ilaç reçete etmek",
+          "trS": "Ağrı için ilaç reçete etti.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-004",
+          "en": "run some tests",
+          "enS": "We need to run some tests first.",
+          "tr": "tetkik yapmak",
+          "trS": "Önce birkaç tetkik yapmamız gerek.",
+          "level": "B1"
+        },
+        {
+          "id": "tip-005",
+          "en": "monitor the vital signs",
+          "enS": "Nurses monitor the vital signs hourly.",
+          "tr": "hayati bulguları izlemek",
+          "trS": "Hemşireler hayati bulguları saat başı izler.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-006",
+          "en": "refer a patient to a specialist",
+          "enS": "He referred the patient to a specialist.",
+          "tr": "hastayı uzmana yönlendirmek",
+          "trS": "Hastayı bir uzmana yönlendirdi.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-007",
+          "en": "rule out a condition",
+          "enS": "The scan ruled out a serious condition.",
+          "tr": "bir hastalığı elemek",
+          "trS": "Görüntüleme ciddi bir hastalığı eledi.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-008",
+          "en": "relieve the symptoms",
+          "enS": "This medicine relieves the symptoms quickly.",
+          "tr": "belirtileri hafifletmek",
+          "trS": "Bu ilaç belirtileri çabuk hafifletir.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-009",
+          "en": "administer an injection",
+          "enS": "The nurse administered the injection.",
+          "tr": "enjeksiyon yapmak",
+          "trS": "Hemşire enjeksiyonu yaptı.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-010",
+          "en": "discharge a patient",
+          "enS": "They discharged the patient on Monday.",
+          "tr": "hastayı taburcu etmek",
+          "trS": "Hastayı pazartesi taburcu ettiler.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-011",
+          "en": "give informed consent",
+          "enS": "The patient gave informed consent.",
+          "tr": "bilgilendirilmiş onam vermek",
+          "trS": "Hasta bilgilendirilmiş onam verdi.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-012",
+          "en": "be on call",
+          "enS": "I am on call this weekend.",
+          "tr": "nöbetçi olmak",
+          "trS": "Bu hafta sonu nöbetçiyim.",
+          "level": "B2"
+        }
+      ]
+    },
+    {
+      "name": "Tanı ve Tedavi",
+      "color": "#881337",
+      "cards": [
+        {
+          "id": "tip-013",
+          "en": "perform surgery",
+          "enS": "The team performed surgery for six hours.",
+          "tr": "ameliyat yapmak",
+          "trS": "Ekip altı saat ameliyat yaptı.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-014",
+          "en": "make a full recovery",
+          "enS": "She made a full recovery in a month.",
+          "tr": "tamamen iyileşmek",
+          "trS": "Bir ayda tamamen iyileşti.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-015",
+          "en": "follow a treatment plan",
+          "enS": "Please follow the treatment plan closely.",
+          "tr": "tedavi planına uymak",
+          "trS": "Lütfen tedavi planına titizlikle uyun.",
+          "level": "B1"
+        },
+        {
+          "id": "tip-016",
+          "en": "have a side effect",
+          "enS": "This drug has a mild side effect.",
+          "tr": "yan etkisi olmak",
+          "trS": "Bu ilacın hafif bir yan etkisi var.",
+          "level": "B1"
+        },
+        {
+          "id": "tip-017",
+          "en": "take a blood sample",
+          "enS": "The nurse took a blood sample.",
+          "tr": "kan örneği almak",
+          "trS": "Hemşire kan örneği aldı.",
+          "level": "B1"
+        },
+        {
+          "id": "tip-018",
+          "en": "stitch a wound",
+          "enS": "The doctor stitched the wound carefully.",
+          "tr": "yarayı dikmek",
+          "trS": "Doktor yarayı dikkatle dikti.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-019",
+          "en": "set a broken bone",
+          "enS": "They set the broken bone in the ward.",
+          "tr": "kırığı yerine oturtmak",
+          "trS": "Kırığı serviste yerine oturttular.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-020",
+          "en": "develop an infection",
+          "enS": "The wound developed an infection.",
+          "tr": "enfeksiyon kapmak",
+          "trS": "Yara enfeksiyon kaptı.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-021",
+          "en": "be in intensive care",
+          "enS": "He was in intensive care for a week.",
+          "tr": "yoğun bakımda olmak",
+          "trS": "Bir hafta yoğun bakımdaydı.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-022",
+          "en": "respond to treatment",
+          "enS": "The patient responded well to treatment.",
+          "tr": "tedaviye yanıt vermek",
+          "trS": "Hasta tedaviye iyi yanıt verdi.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-023",
+          "en": "carry out a scan",
+          "enS": "They carried out a scan the same day.",
+          "tr": "görüntüleme yapmak",
+          "trS": "Aynı gün görüntüleme yaptılar.",
+          "level": "B2"
+        },
+        {
+          "id": "tip-024",
+          "en": "keep the patient stable",
+          "enS": "Our priority is to keep the patient stable.",
+          "tr": "hastayı stabil tutmak",
+          "trS": "Önceliğimiz hastayı stabil tutmak.",
+          "level": "B2"
+        }
+      ]
+    }
+  ]
+}

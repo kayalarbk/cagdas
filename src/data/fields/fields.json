@@ -328,6 +328,111 @@
           "wordCount": 17
         }
       ]
+    },
+    {
+      "id": "akademik",
+      "name": "Akademik İngilizce",
+      "icon": "📚",
+      "color": "#0891B2",
+      "description": "Makale, araştırma, sunum ve tartışma dili.",
+      "file": "src/data/fields/akademik.json",
+      "wordCount": 24,
+      "categories": [
+        {
+          "name": "Makale ve Araştırma",
+          "color": "#0E7490",
+          "wordCount": 12
+        },
+        {
+          "name": "Sunum ve Tartışma",
+          "color": "#155E75",
+          "wordCount": 12
+        }
+      ]
+    },
+    {
+      "id": "ekonomi",
+      "name": "Ekonomi & İşletme",
+      "icon": "📈",
+      "color": "#15803D",
+      "description": "Piyasa, yatırım, şirket ve yönetim dili.",
+      "file": "src/data/fields/ekonomi.json",
+      "wordCount": 24,
+      "categories": [
+        {
+          "name": "Piyasa ve Finans",
+          "color": "#166534",
+          "wordCount": 12
+        },
+        {
+          "name": "Şirket ve Yönetim",
+          "color": "#14532D",
+          "wordCount": 12
+        }
+      ]
+    },
+    {
+      "id": "hukuk",
+      "name": "Hukuk",
+      "icon": "⚖️",
+      "color": "#B45309",
+      "description": "Dava, sözleşme ve resmi hukuk dili.",
+      "file": "src/data/fields/hukuk.json",
+      "wordCount": 24,
+      "categories": [
+        {
+          "name": "Dava ve Mahkeme",
+          "color": "#92400E",
+          "wordCount": 12
+        },
+        {
+          "name": "Sözleşme ve Haklar",
+          "color": "#78350F",
+          "wordCount": 12
+        }
+      ]
+    },
+    {
+      "id": "muhendislik",
+      "name": "Mühendislik",
+      "icon": "🛠️",
+      "color": "#7C3AED",
+      "description": "Teknik terimler, tasarım, üretim ve proje dili.",
+      "file": "src/data/fields/muhendislik.json",
+      "wordCount": 24,
+      "categories": [
+        {
+          "name": "Teknik Terimler",
+          "color": "#5B21B6",
+          "wordCount": 12
+        },
+        {
+          "name": "Proje ve Üretim",
+          "color": "#4C1D95",
+          "wordCount": 12
+        }
+      ]
+    },
+    {
+      "id": "tip",
+      "name": "Tıp & Sağlık Bilimleri",
+      "icon": "🩺",
+      "color": "#E11D48",
+      "description": "Klinik dil, hasta iletişimi, tanı ve tedavi terimleri.",
+      "file": "src/data/fields/tip.json",
+      "wordCount": 24,
+      "categories": [
+        {
+          "name": "Klinik Dil",
+          "color": "#9F1239",
+          "wordCount": 12
+        },
+        {
+          "name": "Tanı ve Tedavi",
+          "color": "#881337",
+          "wordCount": 12
+        }
+      ]
     }
   ]
 }

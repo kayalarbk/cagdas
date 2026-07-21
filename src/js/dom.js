@@ -20,7 +20,12 @@ export const el = {
   cardsScreen: $('cards-screen'),
   quizScreen: $('quiz-screen'),
 
-  // İlgi alanı seçimi
+  // Tanışma testi / alan seçimi
+  wizardSteps: $('wizardSteps'),
+  wizardTitle: $('wizardTitle'),
+  wizardSub: $('wizardSub'),
+  wizardOptions: $('wizardOptions'),
+  wizardBackBtn: $('wizardBackBtn'),
   interestGrid: $('interestGrid'),
   interestCount: $('interestCount'),
   interestSaveBtn: $('interestSaveBtn'),
@@ -28,6 +33,7 @@ export const el = {
   // Anasayfa
   greetingTitle: $('greetingTitle'),
   greetingSub: $('greetingSub'),
+  profileChip: $('profileChip'),
   goalRingFill: $('goalRingFill'),
   goalCount: $('goalCount'),
   goalTotal: $('goalTotal'),

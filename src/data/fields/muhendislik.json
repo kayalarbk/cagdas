@@ -1,0 +1,213 @@
+{
+  "id": "muhendislik",
+  "name": "Mühendislik",
+  "icon": "🛠️",
+  "color": "#7C3AED",
+  "description": "Teknik terimler, tasarım, üretim ve proje dili.",
+  "categories": [
+    {
+      "name": "Teknik Terimler",
+      "color": "#5B21B6",
+      "cards": [
+        {
+          "id": "muhendislik-001",
+          "en": "run a simulation",
+          "enS": "We run a simulation before every test.",
+          "tr": "simülasyon çalıştırmak",
+          "trS": "Her testten önce simülasyon çalıştırırız.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-002",
+          "en": "measure the tolerance",
+          "enS": "Engineers measure the tolerance carefully.",
+          "tr": "toleransı ölçmek",
+          "trS": "Mühendisler toleransı dikkatle ölçer.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-003",
+          "en": "draw up a blueprint",
+          "enS": "He drew up the blueprint last week.",
+          "tr": "teknik çizim hazırlamak",
+          "trS": "Geçen hafta teknik çizimi hazırladı.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-004",
+          "en": "calculate the load",
+          "enS": "We calculate the load on the beam.",
+          "tr": "yükü hesaplamak",
+          "trS": "Kirişe binen yükü hesaplarız.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-005",
+          "en": "test the prototype",
+          "enS": "They test the prototype in the lab.",
+          "tr": "prototipi test etmek",
+          "trS": "Prototipi laboratuvarda test ediyorlar.",
+          "level": "B1"
+        },
+        {
+          "id": "muhendislik-006",
+          "en": "reduce friction",
+          "enS": "Oil reduces friction between the parts.",
+          "tr": "sürtünmeyi azaltmak",
+          "trS": "Yağ parçalar arasındaki sürtünmeyi azaltır.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-007",
+          "en": "install a component",
+          "enS": "I install the component myself.",
+          "tr": "parça takmak",
+          "trS": "Parçayı kendim takarım.",
+          "level": "B1"
+        },
+        {
+          "id": "muhendislik-008",
+          "en": "trace a fault",
+          "enS": "It took hours to trace the fault.",
+          "tr": "arızayı tespit etmek",
+          "trS": "Arızayı tespit etmek saatler sürdü.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-009",
+          "en": "meet the specifications",
+          "enS": "The part meets the specifications.",
+          "tr": "şartnameyi karşılamak",
+          "trS": "Parça şartnameyi karşılıyor.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-010",
+          "en": "scale up production",
+          "enS": "We scaled up production last year.",
+          "tr": "üretimi büyütmek",
+          "trS": "Geçen yıl üretimi büyüttük.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-011",
+          "en": "run a stress test",
+          "enS": "The team ran a stress test on the bridge.",
+          "tr": "dayanım testi yapmak",
+          "trS": "Ekip köprüde dayanım testi yaptı.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-012",
+          "en": "optimize a design",
+          "enS": "We optimized the design for cost.",
+          "tr": "tasarımı optimize etmek",
+          "trS": "Tasarımı maliyet için optimize ettik.",
+          "level": "B2"
+        }
+      ]
+    },
+    {
+      "name": "Proje ve Üretim",
+      "color": "#4C1D95",
+      "cards": [
+        {
+          "id": "muhendislik-013",
+          "en": "draft a technical report",
+          "enS": "She drafts the technical report every month.",
+          "tr": "teknik rapor yazmak",
+          "trS": "O her ay teknik rapor yazar.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-014",
+          "en": "go over budget",
+          "enS": "The project went over budget in March.",
+          "tr": "bütçeyi aşmak",
+          "trS": "Proje martta bütçeyi aştı.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-015",
+          "en": "assemble the parts",
+          "enS": "The workers assemble the parts by hand.",
+          "tr": "parçaları monte etmek",
+          "trS": "İşçiler parçaları elle monte eder.",
+          "level": "B1"
+        },
+        {
+          "id": "muhendislik-016",
+          "en": "carry out maintenance",
+          "enS": "We carry out maintenance twice a year.",
+          "tr": "bakım yapmak",
+          "trS": "Yılda iki kez bakım yaparız.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-017",
+          "en": "meet safety standards",
+          "enS": "Every machine must meet safety standards.",
+          "tr": "güvenlik standartlarını karşılamak",
+          "trS": "Her makine güvenlik standartlarını karşılamalı.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-018",
+          "en": "commission a system",
+          "enS": "The team commissioned the new system.",
+          "tr": "sistemi devreye almak",
+          "trS": "Ekip yeni sistemi devreye aldı.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-019",
+          "en": "reverse-engineer a product",
+          "enS": "They reverse-engineered the old product.",
+          "tr": "tersine mühendislik yapmak",
+          "trS": "Eski ürüne tersine mühendislik yaptılar.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-020",
+          "en": "draw up a timeline",
+          "enS": "We drew up a timeline for the build.",
+          "tr": "zaman çizelgesi hazırlamak",
+          "trS": "Yapım için zaman çizelgesi hazırladık.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-021",
+          "en": "review the design",
+          "enS": "We review the design before production.",
+          "tr": "tasarımı gözden geçirmek",
+          "trS": "Üretimden önce tasarımı gözden geçiririz.",
+          "level": "B1"
+        },
+        {
+          "id": "muhendislik-022",
+          "en": "work to a deadline",
+          "enS": "Engineers often work to a tight deadline.",
+          "tr": "teslim tarihine göre çalışmak",
+          "trS": "Mühendisler çoğu zaman sıkı bir teslim tarihine göre çalışır.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-023",
+          "en": "document the process",
+          "enS": "Always document the process in detail.",
+          "tr": "süreci belgelemek",
+          "trS": "Süreci her zaman ayrıntılı belgele.",
+          "level": "B2"
+        },
+        {
+          "id": "muhendislik-024",
+          "en": "roll back a change",
+          "enS": "We rolled back the change after the error.",
+          "tr": "değişikliği geri almak",
+          "trS": "Hatadan sonra değişikliği geri aldık.",
+          "level": "B2"
+        }
+      ]
+    }
+  ]
+}

@@ -1014,6 +1014,192 @@ h1, h2, h3 { margin: 0; line-height: 1.25; letter-spacing: -0.02em; }
 }
 
 
+
+/* ---------------- Tanışma testi (sihirbaz) ---------------- */
+
+.wizard-steps {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.wizard-step {
+  width: 26px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-alt);
+  transition: background-color 0.25s ease, width 0.25s ease;
+}
+
+.wizard-step.is-done { background: color-mix(in srgb, var(--brand) 45%, transparent); }
+.wizard-step.is-active { width: 40px; background: var(--brand); }
+
+.option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.option-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  background: var(--surface);
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.12s ease,
+    box-shadow 0.18s ease;
+}
+
+.option-card:hover { border-color: var(--border-strong); }
+.option-card:active { transform: scale(0.985); }
+
+.option-card.is-selected {
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+  box-shadow: var(--shadow);
+}
+
+.option-icon {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+}
+
+.option-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.option-label { font-size: 16px; font-weight: 700; }
+.option-hint { font-size: 13px; color: var(--text-soft); }
+
+.option-check {
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: var(--on-brand);
+  font-size: 14px;
+  font-weight: 800;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.18s ease, transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.option-card.is-selected .option-check { opacity: 1; transform: scale(1); }
+
+.onboarding-actions { display: flex; gap: 10px; align-items: center; }
+.onboarding-actions .btn-ghost { flex: 0 0 auto; }
+
+.field-tile-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--tile-color, var(--brand)) 16%, transparent);
+  color: var(--tile-color, var(--brand));
+}
+
+.field-tile-tag ~ .field-tile-icon { margin-top: 18px; }
+
+/* ---------------- Profil çipi ve alan ekleme ---------------- */
+
+.profile-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 7px 12px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.18s ease, transform 0.12s ease;
+}
+
+.profile-chip:hover { border-color: var(--border-strong); }
+.profile-chip:active { transform: scale(0.97); }
+
+.profile-chip.is-empty {
+  border-color: color-mix(in srgb, var(--brand) 40%, transparent);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.profile-chip-level {
+  font-weight: 600;
+  color: var(--text-soft);
+  border-left: 1px solid var(--border);
+  padding-left: 8px;
+}
+
+.profile-chip-edit {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+
+.section-note { font-size: 12px; color: var(--text-faint); }
+
+.field-row-wrap { display: flex; align-items: stretch; gap: 8px; }
+.field-row-wrap .field-row { flex: 1; min-width: 0; }
+
+.field-add-btn {
+  flex: 0 0 auto;
+  padding: 0 14px;
+  border-radius: var(--radius);
+  border: 1.5px dashed var(--border-strong);
+  background: var(--surface);
+  color: var(--brand);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+}
+
+.field-add-btn:hover { border-color: var(--brand); background: var(--brand-soft); }
+.field-add-btn:active { transform: scale(0.95); }
+
+.field-row-tag {
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
 /* ---------------- Seviye (CEFR) ---------------- */
 
 .level-badge {

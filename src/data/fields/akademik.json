@@ -1,0 +1,213 @@
+{
+  "id": "akademik",
+  "name": "Akademik İngilizce",
+  "icon": "📚",
+  "color": "#0891B2",
+  "description": "Makale, araştırma, sunum ve tartışma dili.",
+  "categories": [
+    {
+      "name": "Makale ve Araştırma",
+      "color": "#0E7490",
+      "cards": [
+        {
+          "id": "akademik-001",
+          "en": "review the literature",
+          "enS": "First, review the literature carefully.",
+          "tr": "literatür taraması yapmak",
+          "trS": "Önce dikkatli bir literatür taraması yap.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-002",
+          "en": "cite a source",
+          "enS": "Always cite your sources properly.",
+          "tr": "kaynak göstermek",
+          "trS": "Kaynaklarını her zaman düzgün göster.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-003",
+          "en": "state a hypothesis",
+          "enS": "The authors state the hypothesis clearly.",
+          "tr": "hipotez ortaya koymak",
+          "trS": "Yazarlar hipotezi açıkça ortaya koyuyor.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-004",
+          "en": "collect the data",
+          "enS": "We collected the data over six months.",
+          "tr": "veri toplamak",
+          "trS": "Verileri altı ayda topladık.",
+          "level": "B1"
+        },
+        {
+          "id": "akademik-005",
+          "en": "analyse the results",
+          "enS": "She analysed the results in detail.",
+          "tr": "sonuçları analiz etmek",
+          "trS": "Sonuçları ayrıntılı analiz etti.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-006",
+          "en": "draw a conclusion",
+          "enS": "It is too early to draw a conclusion.",
+          "tr": "sonuç çıkarmak",
+          "trS": "Sonuç çıkarmak için çok erken.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-007",
+          "en": "peer-review a paper",
+          "enS": "Two experts peer-reviewed the paper.",
+          "tr": "makaleyi hakem değerlendirmesinden geçirmek",
+          "trS": "İki uzman makaleyi hakem değerlendirmesinden geçirdi.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-008",
+          "en": "publish a paper",
+          "enS": "He published a paper in a journal.",
+          "tr": "makale yayımlamak",
+          "trS": "Bir dergide makale yayımladı.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-009",
+          "en": "paraphrase a text",
+          "enS": "Paraphrase the text in your own words.",
+          "tr": "metni kendi cümlelerinle yazmak",
+          "trS": "Metni kendi cümlelerinle yaz.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-010",
+          "en": "avoid plagiarism",
+          "enS": "Cite carefully to avoid plagiarism.",
+          "tr": "intihalden kaçınmak",
+          "trS": "İntihalden kaçınmak için dikkatli atıf yap.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-011",
+          "en": "support an argument",
+          "enS": "Data supports the main argument.",
+          "tr": "savı desteklemek",
+          "trS": "Veriler ana savı destekliyor.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-012",
+          "en": "reference a study",
+          "enS": "The article references an older study.",
+          "tr": "çalışmaya atıf yapmak",
+          "trS": "Makale daha eski bir çalışmaya atıf yapıyor.",
+          "level": "B2"
+        }
+      ]
+    },
+    {
+      "name": "Sunum ve Tartışma",
+      "color": "#155E75",
+      "cards": [
+        {
+          "id": "akademik-013",
+          "en": "open the floor to questions",
+          "enS": "The speaker opened the floor to questions.",
+          "tr": "sözü katılımcılara açmak",
+          "trS": "Konuşmacı sözü katılımcılara açtı.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-014",
+          "en": "outline the main points",
+          "enS": "Let me outline the main points first.",
+          "tr": "ana hatları çizmek",
+          "trS": "Önce ana hatları çizeyim.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-015",
+          "en": "back up a claim with evidence",
+          "enS": "Back up every claim with evidence.",
+          "tr": "iddiayı kanıtla desteklemek",
+          "trS": "Her iddiayı kanıtla destekle.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-016",
+          "en": "raise a question",
+          "enS": "A student raised an interesting question.",
+          "tr": "soru yöneltmek",
+          "trS": "Bir öğrenci ilginç bir soru yöneltti.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-017",
+          "en": "take questions at the end",
+          "enS": "I will take questions at the end.",
+          "tr": "sonda soru almak",
+          "trS": "Soruları sonda alacağım.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-018",
+          "en": "summarise the findings",
+          "enS": "She summarised the findings in a slide.",
+          "tr": "bulguları özetlemek",
+          "trS": "Bulguları tek slaytta özetledi.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-019",
+          "en": "defend a thesis",
+          "enS": "He defends his thesis next month.",
+          "tr": "tez savunmak",
+          "trS": "Gelecek ay tezini savunacak.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-020",
+          "en": "present the methodology",
+          "enS": "Present the methodology step by step.",
+          "tr": "yöntemi sunmak",
+          "trS": "Yöntemi adım adım sun.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-021",
+          "en": "interpret the graph",
+          "enS": "Can you interpret the graph for us?",
+          "tr": "grafiği yorumlamak",
+          "trS": "Grafiği bizim için yorumlayabilir misin?",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-022",
+          "en": "acknowledge a limitation",
+          "enS": "The authors acknowledge a limitation.",
+          "tr": "kısıtlılığı belirtmek",
+          "trS": "Yazarlar bir kısıtlılığı belirtiyor.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-023",
+          "en": "build on previous work",
+          "enS": "This study builds on previous work.",
+          "tr": "önceki çalışmanın üzerine koymak",
+          "trS": "Bu çalışma önceki çalışmanın üzerine koyuyor.",
+          "level": "B2"
+        },
+        {
+          "id": "akademik-024",
+          "en": "stick to the time limit",
+          "enS": "Please stick to the time limit.",
+          "tr": "süreye uymak",
+          "trS": "Lütfen süreye uyun.",
+          "level": "B2"
+        }
+      ]
+    }
+  ]
+}

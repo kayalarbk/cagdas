@@ -5,16 +5,24 @@ import { LEVELS } from '../config.js';
 import { cardLevel, findCategory, getFieldMeta, levelCounts } from '../data/repository.js';
 import { state } from '../state.js';
 import { isLearned, toggleLearned } from '../store/progress.js';
+import { getPreferredLevels } from '../store/profile.js';
 import { recordWordLearned } from '../store/stats.js';
 import { shuffleArray, speak } from '../utils.js';
 import { renderHeader } from '../ui/header.js';
 import { toast } from '../ui/toast.js';
 import { showScreen } from './navigation.js';
 
+/** Kart, geçerli seviye filtresine giriyor mu? ('fit' = testte belirlenen seviye) */
+function matchesLevel(card) {
+  if (state.level === 'all') return true;
+  if (state.level === 'fit') return getPreferredLevels().includes(cardLevel(card));
+  return cardLevel(card) === state.level;
+}
+
 /** Geçerli filtrelere (seviye + öğrenilme durumu) göre gösterilecek kartlar. */
 export function visibleCards() {
   return state.deck.filter((card) => {
-    if (state.level !== 'all' && cardLevel(card) !== state.level) return false;
+    if (!matchesLevel(card)) return false;
     if (state.onlyUnlearned && isLearned(card)) return false;
     return true;
   });
@@ -26,7 +34,8 @@ function renderEmptyState() {
   // Seviye filtresi yüzünden boşsa "bitirdin" demek yanıltıcı olur.
   const levelOnly = state.level !== 'all' && !state.onlyUnlearned;
   const emoji = levelOnly ? '🔍' : '🏆';
-  const title = levelOnly ? `${state.level} kartı kalmadı` : 'Bu bölümü bitirdin!';
+  const label = state.level === 'fit' ? 'Sana uygun' : state.level;
+  const title = levelOnly ? `${label} kartı kalmadı` : 'Bu bölümü bitirdin!';
   const text = levelOnly
     ? 'Bu seviyede gösterilecek kart yok. Başka bir seviye seçebilirsin.'
     : 'Filtreleri kapatıp tekrar göz atabilir ya da quiz ile pekiştirebilirsin.';
@@ -166,10 +175,24 @@ function renderLevelFilter() {
   }
 
   // Filtrelenen seviye destede yoksa (kategori değişimi) filtreyi sıfırla.
-  if (state.level !== 'all' && !present.includes(state.level)) state.level = 'all';
+  // 'fit' bir CEFR seviyesi değil; kapsamı aşağıda ayrıca kontrol edilir.
+  if (state.level !== 'all' && state.level !== 'fit' && !present.includes(state.level)) {
+    state.level = 'all';
+  }
 
-  const options = [{ value: 'all', label: 'Tümü', count: state.deck.length }].concat(
-    present.map((level) => ({ value: level, label: level, count: counts[level] }))
+  const options = [{ value: 'all', label: 'Tümü', count: state.deck.length }];
+
+  // Testteki seviyeye uyan kartlar için tek dokunuşluk kısayol.
+  const preferred = getPreferredLevels();
+  const fitCount = preferred.reduce((sum, level) => sum + (counts[level] || 0), 0);
+  if (fitCount > 0 && fitCount < state.deck.length) {
+    options.push({ value: 'fit', label: '⭐ Sana uygun', count: fitCount });
+  } else if (state.level === 'fit') {
+    state.level = 'all';
+  }
+
+  options.push(
+    ...present.map((level) => ({ value: level, label: level, count: counts[level] }))
   );
 
   el.levelFilter.innerHTML = '';
@@ -178,7 +201,7 @@ function renderLevelFilter() {
     btn.type = 'button';
     btn.className = 'level-chip';
     btn.dataset.level = value;
-    if (value !== 'all') btn.classList.add(`level-${value.toLowerCase()}`);
+    if (value !== 'all' && value !== 'fit') btn.classList.add(`level-${value.toLowerCase()}`);
     btn.classList.toggle('is-active', state.level === value);
     btn.setAttribute('aria-pressed', String(state.level === value));
     btn.innerHTML = `${label}<span class="level-chip-count">${count}</span>`;
@@ -220,7 +243,8 @@ export function openCategory(fieldId, categoryName) {
   state.cardIndex = 0;
   state.flipped = false;
   state.onlyUnlearned = false;
-  state.level = 'all';
+  // Testi çözen kullanıcı doğrudan kendi seviyesindeki kartlarla başlar.
+  state.level = getPreferredLevels().length > 0 ? 'fit' : 'all';
 
   renderCards();
   showScreen('cards');

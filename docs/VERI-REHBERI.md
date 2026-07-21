@@ -76,7 +76,22 @@ npm start
 `⚠` uyarılar. Uyarılar sürümü engellemez ama içerik kalitesine işaret eder
 (aynı alanda tekrar eden kalıp, cümleyle ilgisiz görünen kalıp gibi).
 
-## Parti 3 için ayrılan alan kimlikleri
+## Meslek alanları ve tanışma testi
+
+`src/js/config.js` içindeki `PROFILES`, testin ilk adımındaki bölüm/meslek
+seçeneklerini ve her birinin **önerdiği alanları** tanımlar. Yeni bir meslek
+alanı eklerken:
+
+1. Alan dosyasını `src/data/fields/` içine koy, `npm run sync && npm run validate`.
+2. İlgili profilin `fields` dizisine alanın id'sini ekle (ya da yeni bir profil tanımla).
+3. Amaca bağlı öneri isteniyorsa `GOALS` içindeki uygun kaydın `fields` dizisine ekle.
+
+Kod tarafında başka değişiklik gerekmez; anasayfa, keşfet listesi ve test
+tamamen manifest + bu iki tablodan beslenir.
+
+Hâlihazırdaki meslek alanları: `muhendislik`, `tip`, `ekonomi`, `hukuk`, `akademik`.
+
+## Sonraki partiler için ayrılan alan kimlikleri
 
 Planlanan yeni alanlar aşağıdaki id/ikon/renk ile gelmelidir; bu değerler
 mevcut alanlarla çakışmayacak şekilde seçildi (önek çakışması yok, renkler
@@ -94,13 +109,16 @@ numarasından** devam etmelidir:
 
 | Alan | son id | Alan | son id |
 |---|---|---|---|
-| `gunluk-rutin` | 156 | `iliskiler` | 141 |
-| `is-hayati` | 98 | `ev-doga` | 84 |
-| `egitim` | 87 | `finans-para` | 57 |
-| `seyahat` | 129 | `iletisim` | 67 |
-| `saglik-spor` | 91 | `medya-eglence` | 60 |
-| `yemek-alisveris` | 135 | `acil-guvenlik` | 44 |
-| `resmi-islemler` | 39 | `kisisel-gelisim` | 41 |
+| `gunluk-rutin` | 156 | `medya-eglence` | 60 |
+| `is-hayati` | 98 | `acil-guvenlik` | 44 |
+| `egitim` | 87 | `resmi-islemler` | 39 |
+| `seyahat` | 129 | `kisisel-gelisim` | 41 |
+| `saglik-spor` | 91 | `akademik` | 24 |
+| `yemek-alisveris` | 135 | `ekonomi` | 24 |
+| `iliskiler` | 141 | `hukuk` | 24 |
+| `ev-doga` | 84 | `muhendislik` | 24 |
+| `finans-para` | 57 | `tip` | 24 |
+| `iletisim` | 67 | | |
 
-Parti 3 hedefi ~1800 kart; seviye dengesi için ağırlık B1-B2'de olmalı
-(B2 oranı %7'den %14'e çıktı, hedef ~%25).
+Hedef ~1800 kart; şu an 1349. Meslek alanları 24'er kartla başladı, önce onların
+derinleştirilmesi öncelikli. B2 oranı %20 (hedef ~%25).

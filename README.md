@@ -1,12 +1,15 @@
 # Daily English
 
 Günlük İngilizce kelime ve kalıpları çalışmak için hazırlanmış, bağımlılıksız bir
-flashcard uygulaması. 14 alan ve 35 kategoride 1229 kart; her kartta örnek cümle,
-Türkçe karşılık, CEFR seviyesi ve telaffuz desteği var.
+flashcard uygulaması. 19 alan ve 45 kategoride 1349 kart; her kartta örnek cümle,
+Türkçe karşılık, CEFR seviyesi ve telaffuz desteği var. Mühendislik, tıp, ekonomi,
+hukuk ve akademik İngilizce için ayrı alanlar içerir.
 
 ## Özellikler
 
-- **İlgi alanına göre çalışma** — açılışta alanlarını seç, anasayfa yalnızca onları öne çıkarır
+- **Tanışma testi** — bölüm/meslek, seviye ve amacını sorar; alanları sana göre önerir
+- **Kişiselleştirme** — mesleki alanlar (mühendislik, tıp, ekonomi, hukuk, akademik) ve
+  "sana uygun" seviye filtresi; istediğin zaman yeni alan ekleyip çıkarabilirsin
 - **Flashcard'lar** — karta dokun, İngilizce/Türkçe yüzler arasında çevir
 - **CEFR seviyeleri** — her kartta A1–B2 rozeti; kartlar ekranında seviye filtresi
 - **Telaffuz** — Web Speech API ile kelime ve örnek cümle seslendirme
@@ -46,7 +49,7 @@ Ardından tarayıcıdan `http://localhost:8000` adresini aç.
         ├── state.js            # Kartlar ekranının paylaşılan durumu
         ├── utils.js            # Karıştırma ve seslendirme yardımcıları
         ├── data/repository.js  # Manifest ve alan dosyalarının yüklenmesi
-        ├── store/              # localStorage katmanı: ilgi alanları, ilerleme, istatistik
+        ├── store/              # localStorage: profil, ilgi alanları, ilerleme, istatistik
         ├── ui/                 # Üst bar ve bildirimler
         └── screens/            # onboarding · home · field · cards · quiz
 ```
