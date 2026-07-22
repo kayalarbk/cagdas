@@ -8,8 +8,9 @@ export const QUIZ_LENGTH = 5;
 
 /** localStorage anahtarları. */
 export const STORAGE_KEYS = {
-  learned: 'de_learned_v2', // öğrenilen kart id'leri (dizi)
-  learnedLegacy: 'kartlar_learned_v1', // eski biçim: { "Kategori::kelime": true }
+  srs: 'de_srs_v1', // kart id -> tekrar kaydı { box, due, seen, correct, lapses }
+  learned: 'de_learned_v2', // eski biçim: öğrenilen kart id'leri (dizi) — SRS'e taşınır
+  learnedLegacy: 'kartlar_learned_v1', // daha eski biçim: { "Kategori::kelime": true }
   interests: 'de_interests_v1', // seçili alan id'leri
   stats: 'de_stats_v1', // seri, XP, günlük hedef
   profile: 'de_profile_v1', // tanışma testinin sonucu
@@ -22,14 +23,44 @@ export const STORAGE_KEYS = {
 export const LEVELS = ['A1', 'A2', 'B1', 'B2'];
 export const DEFAULT_LEVEL = 'A2';
 
+/**
+ * Aralıklı tekrar (Leitner) ayarları.
+ *
+ * Kart bir kutuda durur; her doğru hatırlama onu bir üst kutuya taşır ve bir
+ * sonraki tekrar o kutunun gün aralığı kadar ertelenir. Hatırlanamayan kart
+ * 0. kutuya düşer. Böylece "öğrendim" bir beyan değil, zamana dayanmış bir
+ * sonuç olur.
+ */
+export const SRS = {
+  /** Kutu -> bir sonraki tekrara kaç gün. 0. kutu aynı gün tekrar gelir. */
+  intervals: [0, 1, 3, 7, 16, 35],
+  /** Bu kutudan itibaren kart "kalıcı" (öğrenilmiş) sayılır. */
+  masteredBox: 4,
+  /**
+   * Çoktan seçmeli doğru cevabın taşıyabileceği en üst kutu. Dört şıkta %25
+   * şansla doğru bulunabildiği için tanıma tek başına kalıcılığa yetmez;
+   * son adımı ancak kart üzerinde "kolay" demek ya da yazarak bilmek açar.
+   */
+  recognitionMaxBox: 3,
+  /** Eski sürümde "öğrendim" işaretlenmiş kartların taşınacağı kutu. */
+  migrationBox: 2,
+};
+
+/** Kart değerlendirme seçenekleri (ön yüzde, cevabı görmeden). */
+export const GRADES = {
+  again: { id: 'again', label: 'Hatırlamadım', icon: '↺', xp: 2 },
+  hard: { id: 'hard', label: 'Zor hatırladım', icon: '~', xp: 6 },
+  good: { id: 'good', label: 'Kolay', icon: '✓', xp: 10 },
+};
+
 /** Oyunlaştırma ayarları. */
 export const GAMIFICATION = {
-  /** Varsayılan günlük hedef (kelime). */
+  /** Varsayılan günlük hedef (tekrar sayısı). */
   defaultDailyGoal: 10,
-  /** Bir kelimeyi "öğrendim" işaretlemenin puanı. */
-  xpPerWord: 10,
   /** Quizde bir doğru cevabın puanı. */
   xpPerCorrectAnswer: 5,
+  /** Bir kartın "kalıcı" kutusuna ilk kez ulaşmasının ek puanı. */
+  xpPerMastered: 25,
   /** Seçilebilecek en az alan sayısı. */
   minInterests: 1,
 };

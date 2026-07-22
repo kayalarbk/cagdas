@@ -8,19 +8,21 @@ import { el } from './dom.js';
 import { loadManifest } from './data/repository.js';
 import { hasChosenInterests } from './store/interests.js';
 import { renderHeader } from './ui/header.js';
-import { bindCardControls, renderCards } from './screens/cards.js';
+import { bindCardControls, refreshCardView } from './screens/cards.js';
 import { backToField, refreshField } from './screens/field.js';
 import { bindHome, goHome } from './screens/home.js';
 import { currentScreen, showScreen } from './screens/navigation.js';
 import { bindOnboarding, openOnboarding } from './screens/onboarding.js';
-import { advanceQuiz, startQuiz } from './screens/quiz.js';
+import { advanceQuiz, startQuiz, submitTypedAnswer } from './screens/quiz.js';
+import { state } from './state.js';
 
 /** Geri butonunun her ekrandan nereye götürdüğü. */
 const BACK_TARGETS = {
+  // Tekrar seansı bir kategoriye ait değil; oradan çıkış anasayfaya olur.
   field: goHome,
-  cards: backToField,
+  cards: () => (state.deckMode === 'review' ? goHome() : backToField()),
   quiz: () => {
-    renderCards();
+    refreshCardView();
     showScreen('cards');
   },
 };
@@ -35,10 +37,16 @@ function bindQuizControls() {
   if (el.quizBtn) el.quizBtn.onclick = startQuiz;
   if (el.quizNextBtn) el.quizNextBtn.onclick = advanceQuiz;
   if (el.quizRetryBtn) el.quizRetryBtn.onclick = startQuiz;
+  if (el.quizTypeForm) {
+    el.quizTypeForm.onsubmit = (event) => {
+      event.preventDefault();
+      submitTypedAnswer();
+    };
+  }
   if (el.quizBackBtn) {
     el.quizBackBtn.onclick = () => {
       refreshField();
-      renderCards();
+      refreshCardView();
       showScreen('cards');
     };
   }

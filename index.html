@@ -57,6 +57,18 @@
     <button class="profile-chip hidden" id="profileChip" title="Testi yeniden çöz"></button>
   </div>
 
+  <!-- Tekrar kuyruğu: vadesi gelmiş kartlar -->
+  <div class="due-card hidden" id="dueCard">
+    <div class="due-badge" aria-hidden="true">🔁</div>
+    <div class="due-info">
+      <div class="due-title">
+        Bugünün tekrarı<span class="due-count" id="dueCount">0</span>
+      </div>
+      <p class="due-text" id="dueText"></p>
+    </div>
+    <button class="btn btn-primary due-start" id="dueStartBtn">Tekrara başla</button>
+  </div>
+
   <!-- Günlük hedef kartı -->
   <div class="goal-card">
     <div class="goal-ring">
@@ -71,14 +83,14 @@
     </div>
     <div class="goal-info">
       <div class="goal-title">Günlük hedef</div>
-      <p class="goal-text" id="goalText">Bugün 10 kelime öğren.</p>
+      <p class="goal-text" id="goalText">Bugün 10 kart çalış.</p>
       <div class="goal-actions">
         <label class="goal-select-label" for="goalSelect">Hedef</label>
         <select class="goal-select" id="goalSelect">
-          <option value="5">5 kelime</option>
-          <option value="10">10 kelime</option>
-          <option value="20">20 kelime</option>
-          <option value="30">30 kelime</option>
+          <option value="5">5 kart</option>
+          <option value="10">10 kart</option>
+          <option value="20">20 kart</option>
+          <option value="30">30 kart</option>
         </select>
       </div>
     </div>
@@ -108,8 +120,11 @@
     <h1 class="field-hero-name" id="fieldHeroName">Alan</h1>
     <p class="field-hero-desc" id="fieldHeroDesc"></p>
     <div class="field-hero-bar">
-      <div class="progress-track"><div class="progress-fill" id="fieldHeroFill"></div></div>
-      <div class="field-hero-stat" id="fieldHeroStat">0/0 öğrenildi</div>
+      <div class="progress-track">
+        <div class="progress-ghost" id="fieldHeroGhost"></div>
+        <div class="progress-fill" id="fieldHeroFill"></div>
+      </div>
+      <div class="field-hero-stat" id="fieldHeroStat">0/0 kalıcı</div>
     </div>
     <div class="field-hero-levels hidden" id="fieldLevels" aria-label="Seviye dağılımı"></div>
   </div>
@@ -136,6 +151,9 @@
 
   <div class="deck" id="deck"></div>
 
+  <!-- Değerlendirme: cevabı görmeden önce "hatırlıyor musun?" -->
+  <div class="grade-bar" id="gradeBar"></div>
+
   <div class="deck-controls">
     <button class="btn btn-ghost" id="prevBtn">← Önceki</button>
     <button class="btn btn-ghost" id="nextBtn">Sonraki →</button>
@@ -156,6 +174,15 @@
     </div>
 
     <div class="quiz-options" id="quizOptions"></div>
+
+    <!-- Yazma sorusu: üretim testi, çoktan seçmelinin şans payı olmadan -->
+    <form class="quiz-type-form hidden" id="quizTypeForm" autocomplete="off">
+      <input class="quiz-type-input" id="quizTypeInput" type="text"
+             placeholder="İngilizcesini yaz…" autocapitalize="off"
+             autocorrect="off" spellcheck="false" aria-label="İngilizce cevap">
+      <button class="btn btn-primary" id="quizTypeSubmit" type="submit">Kontrol et</button>
+      <p class="quiz-type-feedback hidden" id="quizTypeFeedback" aria-live="polite"></p>
+    </form>
 
     <div class="quiz-footer">
       <button class="btn btn-primary btn-block hidden" id="quizNextBtn">Devam</button>

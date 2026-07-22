@@ -252,6 +252,7 @@ h1, h2, h3 { margin: 0; line-height: 1.25; letter-spacing: -0.02em; }
 /* ---------------- İlerleme çubuğu ---------------- */
 
 .progress-track {
+  position: relative;
   flex: 1;
   height: 10px;
   border-radius: var(--radius-pill);
@@ -266,6 +267,23 @@ h1, h2, h3 { margin: 0; line-height: 1.25; letter-spacing: -0.02em; }
   background: var(--brand);
   transition: width 0.45s cubic-bezier(0.4, 0.2, 0.2, 1);
 }
+
+/*
+  Çalışılmaya başlanmış ama henüz kalıcılaşmamış kartlar. Dolu çubuğun altında
+  soluk bir katman olarak durur; "başladım" ile "öğrendim" aynı görünmesin diye.
+*/
+.progress-ghost {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  width: 0%;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  opacity: 0.28;
+  transition: width 0.45s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.progress-track .progress-fill { position: relative; }
 
 /* ---------------- Ekran geçişi ---------------- */
 
@@ -1299,6 +1317,205 @@ h1, h2, h3 { margin: 0; line-height: 1.25; letter-spacing: -0.02em; }
   background: rgba(255, 255, 255, 0.22);
   color: #fff;
 }
+
+/* ---------------- Aralıklı tekrar ---------------- */
+
+/* Satır renkleri soluk katmana da uygulanır. */
+.field-row-meta .progress-ghost,
+.category-row-meta .progress-ghost { background: var(--row-color, var(--brand)); }
+.field-hero-bar .progress-ghost { background: #fff; opacity: 0.4; }
+
+/* Kart durumu rozeti: Yeni · Öğreniliyor · Pekişti · Kalıcı */
+.status-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--status-soft);
+  color: var(--status-ink);
+  white-space: nowrap;
+}
+
+.status-new { --status-soft: var(--surface-alt); --status-ink: var(--text-faint); }
+.status-learning { --status-soft: #FEF3C7; --status-ink: #92400E; }
+.status-familiar { --status-soft: #DBEAFE; --status-ink: #1E40AF; }
+.status-mastered { --status-soft: var(--correct-soft); --status-ink: #166534; }
+
+@media (prefers-color-scheme: dark) {
+  .status-learning { --status-soft: #3A2A0A; --status-ink: #FCD34D; }
+  .status-familiar { --status-soft: #16234A; --status-ink: #93C5FD; }
+  .status-mastered { --status-soft: #113322; --status-ink: #86EFAC; }
+}
+
+/* Tekrar kuyruğu kartı (anasayfa) */
+.due-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  border-radius: var(--radius);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--brand) 14%, var(--surface)),
+    var(--surface)
+  );
+  border: 1.5px solid color-mix(in srgb, var(--brand) 32%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+
+.due-badge {
+  font-size: 26px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.due-info { flex: 1; min-width: 140px; }
+
+.due-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.due-count {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: var(--on-brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.due-text { margin: 4px 0 0; font-size: 13px; color: var(--text-soft); }
+
+.due-start { flex: 0 0 auto; padding: 11px 18px; font-size: 14px; }
+
+/* Alan / kategori satırlarındaki tekrar rozeti */
+.field-row-due,
+.category-row-due {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--brand) 16%, transparent);
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.category-row-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Kart değerlendirme çubuğu */
+.grade-bar { margin-bottom: 14px; }
+
+.grade-hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--text-soft);
+}
+
+.grade-row { display: flex; gap: 8px; }
+
+.grade-btn {
+  font: inherit;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 11px 8px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--grade-color, var(--border));
+  background: var(--surface);
+  color: var(--grade-color, var(--text));
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.12s ease, opacity 0.18s ease;
+}
+
+.grade-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--grade-color, var(--brand)) 10%, var(--surface));
+}
+
+.grade-btn:active:not(:disabled) { transform: scale(0.96); }
+
+.grade-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.grade-btn--again { --grade-color: var(--wrong); }
+.grade-btn--hard { --grade-color: var(--accent); }
+.grade-btn--good { --grade-color: var(--correct); }
+
+.grade-btn-icon { font-size: 17px; line-height: 1; font-weight: 800; }
+.grade-btn-label { font-size: 12px; font-weight: 700; }
+
+.grade-result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.grade-result-status {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--status-soft);
+  color: var(--status-ink);
+}
+
+.grade-result-due { font-size: 13px; color: var(--text-soft); }
+
+/* Quiz — yazma sorusu */
+.quiz-type-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.quiz-type-input {
+  font: inherit;
+  flex: 1;
+  min-width: 160px;
+  font-size: 17px;
+  font-weight: 600;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.quiz-type-input:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+.quiz-type-input.is-correct { border-color: var(--correct); background: var(--correct-soft); }
+.quiz-type-input.is-wrong { border-color: var(--wrong); background: var(--wrong-soft); }
+
+.quiz-type-feedback {
+  flex: 1 0 100%;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.quiz-type-feedback.is-correct { color: var(--correct); }
+.quiz-type-feedback.is-wrong { color: var(--wrong); }
 
 /* ---------------- Geniş ekran ---------------- */
 

@@ -5,29 +5,42 @@ import { LEVELS } from '../config.js';
 import { getFieldMeta, levelCounts, loadField } from '../data/repository.js';
 import { state } from '../state.js';
 import {
-  countLearnedInCards,
+  countDueInCards,
   getFieldProgress,
   migrateLegacyProgress,
+  statusCounts,
 } from '../store/progress.js';
 import { toast } from '../ui/toast.js';
 import { openCategory } from './cards.js';
 import { showScreen } from './navigation.js';
 
 function renderHero(meta) {
-  const { learned, total, pct } = getFieldProgress(meta.id);
+  const { learned, started, total, pct, startedPct, due } = getFieldProgress(meta.id);
 
   if (el.fieldHero) el.fieldHero.style.setProperty('--hero-color', meta.color);
   if (el.fieldHeroIcon) el.fieldHeroIcon.textContent = meta.icon;
   if (el.fieldHeroName) el.fieldHeroName.textContent = meta.name;
   if (el.fieldHeroDesc) el.fieldHeroDesc.textContent = meta.description;
+  if (el.fieldHeroGhost) el.fieldHeroGhost.style.width = `${startedPct}%`;
   if (el.fieldHeroFill) el.fieldHeroFill.style.width = `${pct}%`;
-  if (el.fieldHeroStat) el.fieldHeroStat.textContent = `${learned}/${total} · %${pct}`;
+  if (el.fieldHeroStat) {
+    // "Kalıcı" ve "çalışılan" ayrı ayrı verilir; tek yüzde ilerlemeyi abartırdı.
+    el.fieldHeroStat.textContent =
+      `${learned} kalıcı · ${started - learned} çalışılıyor · ${total} kelime` +
+      (due > 0 ? ` · ${due} tekrar` : '');
+  }
 }
 
 function categoryRow(meta, category) {
   const total = category.cards.length;
-  const learned = Math.min(countLearnedInCards(category.cards), total);
-  const pct = total ? Math.round((learned / total) * 100) : 0;
+  const counts = statusCounts(category.cards);
+  // Rozet yalnız tekrar borcunu gösterir; henüz görülmemiş kartlar "borç" değil,
+  // zaten 0/39 sayacından görülüyor.
+  const due = countDueInCards(category.cards);
+  const pct = total ? Math.round((counts.mastered / total) * 100) : 0;
+  const startedPct = total
+    ? Math.round(((total - counts.new) / total) * 100)
+    : 0;
 
   const row = document.createElement('button');
   row.type = 'button';
@@ -35,15 +48,25 @@ function categoryRow(meta, category) {
   row.style.setProperty('--row-color', category.color || meta.color);
   row.innerHTML = `
     <span class="category-row-body">
-      <span class="category-row-name">${category.name}</span>
+      <span class="category-row-name">
+        ${category.name}
+        ${due > 0 ? `<span class="category-row-due">${due}</span>` : ''}
+      </span>
       <span class="category-row-meta">
-        <span class="progress-track"><span class="progress-fill" style="width:${pct}%"></span></span>
-        <span class="category-row-count">${learned}/${total}</span>
+        <span class="progress-track">
+          <span class="progress-ghost" style="width:${startedPct}%"></span>
+          <span class="progress-fill" style="width:${pct}%"></span>
+        </span>
+        <span class="category-row-count">${counts.mastered}/${total}</span>
       </span>
     </span>
     ${pct === 100 ? '<span class="category-row-medal" aria-hidden="true">🏅</span>' : ''}
   `;
-  row.setAttribute('aria-label', `${category.name}, ${learned} / ${total} öğrenildi`);
+  row.setAttribute(
+    'aria-label',
+    `${category.name}, ${counts.mastered} / ${total} kalıcı` +
+      (due > 0 ? `, ${due} kart tekrar bekliyor` : '')
+  );
   row.onclick = () => openCategory(meta.id, category.name);
   return row;
 }

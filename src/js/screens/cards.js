@@ -1,16 +1,35 @@
-// Kartlar ekranı: flashcard gösterimi ve kontrolleri.
+// Kartlar ekranı: flashcard gösterimi ve değerlendirme.
+//
+// Değerlendirme kartın ÖN yüzünde, Türkçe karşılık görülmeden yapılır — ölçülmek
+// istenen şey tanıma değil hatırlamadır. Kullanıcı cevaba önce bakarsa ("peek")
+// "Kolay" seçeneği kapanır; kendi kendini kandırması kolay olmasın diye.
 
 import { el, $ } from '../dom.js';
-import { LEVELS } from '../config.js';
-import { cardLevel, findCategory, getFieldMeta, levelCounts } from '../data/repository.js';
+import { GRADES, LEVELS } from '../config.js';
+import {
+  cardLevel,
+  findCategory,
+  getFieldMeta,
+  levelCounts,
+  locateCard,
+} from '../data/repository.js';
 import { state } from '../state.js';
-import { isLearned, toggleLearned } from '../store/progress.js';
+import {
+  STATUS_LABELS,
+  getCardStatus,
+  getRecord,
+  isPending,
+  reviewCard,
+} from '../store/progress.js';
 import { getPreferredLevels } from '../store/profile.js';
-import { recordWordLearned } from '../store/stats.js';
-import { shuffleArray, speak } from '../utils.js';
+import { recordReview } from '../store/stats.js';
+import { dayKey, daysBetween, shuffleArray, speak } from '../utils.js';
 import { renderHeader } from '../ui/header.js';
 import { toast } from '../ui/toast.js';
 import { showScreen } from './navigation.js';
+
+/** @type {ReturnType<typeof reviewCard>|null} görüntülenen kartın son değerlendirmesi */
+let lastResult = null;
 
 /** Kart, geçerli seviye filtresine giriyor mu? ('fit' = testte belirlenen seviye) */
 function matchesLevel(card) {
@@ -19,26 +38,52 @@ function matchesLevel(card) {
   return cardLevel(card) === state.level;
 }
 
-/** Geçerli filtrelere (seviye + öğrenilme durumu) göre gösterilecek kartlar. */
+/** Geçerli filtrelere (seviye + çalışma durumu) göre gösterilecek kartlar. */
 export function visibleCards() {
+  const today = dayKey();
   return state.deck.filter((card) => {
     if (!matchesLevel(card)) return false;
-    if (state.onlyUnlearned && isLearned(card)) return false;
+    // Değerlendirilen kart deste içinde kalır; aksi halde kart elinizin altından
+    // kayar ve sıradaki karta atlamak yerine ekran zıplar.
+    if (state.deckFilter === 'pending' && !isPending(card, today) && card !== currentCard()) {
+      return false;
+    }
     return true;
   });
+}
+
+/** Şu an ekranda olan kart (filtre değişimlerinde referans olarak kullanılır). */
+function currentCard() {
+  return state.deck[state.deckIndexRef] ?? null;
+}
+
+/** Bir sonraki tekrarın ne zaman olduğunu insan diline çevirir. */
+function dueLabel(dueDay) {
+  const days = daysBetween(dayKey(), dueDay);
+  if (days <= 0) return 'bugün tekrar';
+  if (days === 1) return 'yarın tekrar';
+  return `${days} gün sonra tekrar`;
 }
 
 function renderEmptyState() {
   if (!el.deck) return;
 
-  // Seviye filtresi yüzünden boşsa "bitirdin" demek yanıltıcı olur.
-  const levelOnly = state.level !== 'all' && !state.onlyUnlearned;
-  const emoji = levelOnly ? '🔍' : '🏆';
-  const label = state.level === 'fit' ? 'Sana uygun' : state.level;
-  const title = levelOnly ? `${label} kartı kalmadı` : 'Bu bölümü bitirdin!';
-  const text = levelOnly
-    ? 'Bu seviyede gösterilecek kart yok. Başka bir seviye seçebilirsin.'
-    : 'Filtreleri kapatıp tekrar göz atabilir ya da quiz ile pekiştirebilirsin.';
+  const pendingOnly = state.deckFilter === 'pending';
+  const levelOnly = state.level !== 'all' && !pendingOnly;
+
+  let emoji = '🏆';
+  let title = 'Bu bölümü bitirdin!';
+  let text = 'Filtreleri kapatıp tekrar göz atabilir ya da quiz ile pekiştirebilirsin.';
+
+  if (levelOnly) {
+    emoji = '🔍';
+    title = `${state.level === 'fit' ? 'Sana uygun' : state.level} kartı kalmadı`;
+    text = 'Bu seviyede gösterilecek kart yok. Başka bir seviye seçebilirsin.';
+  } else if (pendingOnly) {
+    emoji = '✅';
+    title = 'Bugünlük tekrar bitti';
+    text = 'Bu bölümde bugün çalışılacak kart kalmadı. Yarın yeni tekrarlar açılacak.';
+  }
 
   el.deck.innerHTML = `
     <div class="empty-state">
@@ -49,22 +94,86 @@ function renderEmptyState() {
   `;
   if (el.counter) el.counter.textContent = '0 / 0';
   if (el.deckFill) el.deckFill.style.width = '100%';
+  if (el.gradeBar) el.gradeBar.innerHTML = '';
   if (el.prevBtn) el.prevBtn.disabled = true;
   if (el.nextBtn) el.nextBtn.disabled = true;
 }
 
-function handleLearnClick(card) {
-  const nowLearned = toggleLearned(card);
+/**
+ * Değerlendirmeyi işler: kaydı günceller, puanı yazar, cevabı açar.
+ * @param {object} card
+ * @param {'again'|'hard'|'good'} grade
+ */
+function handleGrade(card, grade) {
+  if (lastResult) return; // aynı kart için tek değerlendirme
 
-  if (nowLearned) {
-    const { goalJustReached, streakIncreased } = recordWordLearned();
-    toast('+10 puan', '⭐');
-    if (streakIncreased) toast('Seri sürüyor!', '🔥');
-    if (goalJustReached) toast('Günlük hedef tamam!', '🎯');
-  }
+  const result = reviewCard(card, grade);
+  const { xp, counted, goalJustReached, streakIncreased } = recordReview(card, grade, result);
+  lastResult = result;
+
+  // Cevabı göster: değerlendirme yapıldıktan sonra doğrusunu görmek öğrenmenin
+  // parçasıdır; kart kendiliğinden arka yüzüne döner.
+  state.flipped = true;
+
+  if (xp > 0) toast(`+${xp} puan`, grade === 'again' ? '💪' : '⭐');
+  if (result.justMastered) toast('Bu kelime artık kalıcı!', '🏆');
+  else if (result.lapsed) toast('Baştan çalışacağız', '↺');
+  if (streakIncreased) toast('Seri sürüyor!', '🔥');
+  if (counted && goalJustReached) toast('Günlük hedef tamam!', '🎯');
 
   renderHeader();
-  renderCards();
+  renderCard();
+}
+
+/** Kartın altındaki değerlendirme çubuğu ya da değerlendirme sonrası özet. */
+function renderGradeBar(card) {
+  if (!el.gradeBar) return;
+  el.gradeBar.innerHTML = '';
+
+  if (lastResult) {
+    const summary = document.createElement('div');
+    summary.className = 'grade-result';
+    summary.innerHTML = `
+      <span class="grade-result-status status-${lastResult.status}">
+        ${STATUS_LABELS[lastResult.status]}
+      </span>
+      <span class="grade-result-due">${dueLabel(lastResult.due)}</span>
+    `;
+
+    const next = document.createElement('button');
+    next.type = 'button';
+    next.className = 'btn btn-primary btn-block';
+    next.textContent = 'Sonraki kart →';
+    next.onclick = () => step(1);
+
+    el.gradeBar.append(summary, next);
+    return;
+  }
+
+  const hint = document.createElement('p');
+  hint.className = 'grade-hint';
+  hint.textContent = state.peeked
+    ? 'Cevaba baktın — bu tekrar "kolay" sayılmıyor.'
+    : 'Türkçesini açmadan önce: hatırlıyor musun?';
+  el.gradeBar.appendChild(hint);
+
+  const row = document.createElement('div');
+  row.className = 'grade-row';
+
+  Object.values(GRADES).forEach((grade) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `grade-btn grade-btn--${grade.id}`;
+    // Cevabı görmüş kullanıcı "kolay" diyemez; hatırlama artık ölçülemez.
+    btn.disabled = grade.id === 'good' && state.peeked;
+    btn.innerHTML =
+      `<span class="grade-btn-icon" aria-hidden="true">${grade.icon}</span>` +
+      `<span class="grade-btn-label">${grade.label}</span>`;
+    btn.onclick = () => handleGrade(card, grade.id);
+    row.appendChild(btn);
+  });
+
+  el.gradeBar.appendChild(row);
 }
 
 function renderCard() {
@@ -79,20 +188,32 @@ function renderCard() {
   state.cardIndex = Math.min(Math.max(state.cardIndex, 0), cards.length - 1);
 
   const card = cards[state.cardIndex];
-  const learned = isLearned(card);
+  state.deckIndexRef = state.deck.indexOf(card);
+
+  const status = getCardStatus(card);
+  const record = getRecord(card);
   const level = cardLevel(card);
-  const color = findCategory(state.fieldId, state.categoryName)?.color
-    || getFieldMeta(state.fieldId)?.color
+
+  // Tekrar seansında kartlar farklı alanlardan gelir; bağlam kartın id'sinden bulunur.
+  const location = state.deckMode === 'review'
+    ? locateCard(card.id)
+    : { fieldId: state.fieldId, categoryName: state.categoryName };
+  const fieldId = location?.fieldId || state.fieldId;
+  const sourceCategory = location?.categoryName || '';
+  const color = findCategory(fieldId, sourceCategory)?.color
+    || getFieldMeta(fieldId)?.color
     || '';
+
+  const streak = record ? `${record.correct}/${record.seen} doğru` : 'ilk kez';
 
   el.deck.innerHTML = `
     <div class="card-inner" id="cardInner" role="button" tabindex="0"
          aria-label="Kartı çevir">
       <div class="face face-front" style="--card-color:${color}">
-        <span class="card-tag">${state.categoryName}</span>
+        <span class="card-tag">${sourceCategory || ''}</span>
         <span class="card-badges">
           <span class="level-badge level-${level.toLowerCase()}">${level}</span>
-          ${learned ? '<span class="card-badge">✓ Öğrenildi</span>' : ''}
+          <span class="status-badge status-${status}">${STATUS_LABELS[status]}</span>
         </span>
         <div class="word-en">${card.en}</div>
         <p class="sentence-en">${card.enS}</p>
@@ -106,9 +227,7 @@ function renderCard() {
         </span>
         <div class="word-tr">${card.tr}</div>
         <p class="sentence-tr">${card.trS}</p>
-        <button class="learn-btn ${learned ? 'is-learned' : ''}" id="learnBtn" type="button">
-          ${learned ? '✓ Öğrenildi' : 'Öğrendim'}
-        </button>
+        <span class="card-hint">${streak}</span>
       </div>
     </div>
   `;
@@ -118,6 +237,11 @@ function renderCard() {
   if (state.flipped) inner.classList.add('is-flipped');
 
   const flip = () => {
+    // Değerlendirmeden önceki ilk çevirme "cevaba bakma"dır ve kaydedilir.
+    if (!state.flipped && !lastResult) {
+      state.peeked = true;
+      renderGradeBar(card);
+    }
     state.flipped = !state.flipped;
     inner.classList.toggle('is-flipped');
   };
@@ -141,13 +265,7 @@ function renderCard() {
     };
   }
 
-  const learnBtn = $('learnBtn');
-  if (learnBtn) {
-    learnBtn.onclick = (event) => {
-      event.stopPropagation();
-      handleLearnClick(card);
-    };
-  }
+  renderGradeBar(card);
 
   if (el.counter) el.counter.textContent = `${state.cardIndex + 1} / ${cards.length}`;
   if (el.deckFill) {
@@ -207,8 +325,8 @@ function renderLevelFilter() {
     btn.innerHTML = `${label}<span class="level-chip-count">${count}</span>`;
     btn.onclick = () => {
       state.level = value;
+      resetCardView();
       state.cardIndex = 0;
-      state.flipped = false;
       renderCards();
     };
     el.levelFilter.appendChild(btn);
@@ -217,15 +335,29 @@ function renderLevelFilter() {
 
 /** Kartı ve araç çubuğunu birlikte çizer. */
 export function renderCards() {
-  if (el.cardsTitle) el.cardsTitle.textContent = state.categoryName || '';
-  renderLevelFilter();
-  if (el.filterBtn) {
-    el.filterBtn.classList.toggle('is-active', state.onlyUnlearned);
-    el.filterBtn.textContent = state.onlyUnlearned
-      ? 'Tümünü göster'
-      : 'Sadece öğrenilmeyenler';
+  if (el.cardsTitle) {
+    el.cardsTitle.textContent =
+      state.deckMode === 'review' ? 'Günün tekrarı' : state.categoryName || '';
   }
+  renderLevelFilter();
+
+  if (el.filterBtn) {
+    const pending = state.deckFilter === 'pending';
+    el.filterBtn.classList.toggle('is-active', pending);
+    el.filterBtn.textContent = pending ? 'Tümünü göster' : 'Bugün çalışılacaklar';
+  }
+  // Tekrar seansında deste zaten yalnız tekrarlardan oluşur; quiz de anlamsız
+  // kalır çünkü kartlar farklı kategorilerden gelir.
+  if (el.quizBtn) el.quizBtn.classList.toggle('hidden', state.deckMode === 'review');
+
   renderCard();
+}
+
+/** Kart görünümünü sıfırlar: çevrilmemiş, değerlendirilmemiş, bakılmamış. */
+function resetCardView() {
+  state.flipped = false;
+  state.peeked = false;
+  lastResult = null;
 }
 
 /**
@@ -239,10 +371,18 @@ export function openCategory(fieldId, categoryName) {
 
   state.fieldId = fieldId;
   state.categoryName = categoryName;
+  state.deckMode = 'category';
   state.deck = [...category.cards];
   state.cardIndex = 0;
-  state.flipped = false;
-  state.onlyUnlearned = false;
+  state.deckIndexRef = 0;
+  resetCardView();
+
+  // Kategoride bekleyen kart varsa doğrudan onlarla başla: uygulamanın verdiği
+  // söz "bugün ne çalışmalıyım" sorusuna cevap vermek.
+  const today = dayKey();
+  const pending = category.cards.filter((card) => isPending(card, today));
+  state.deckFilter = pending.length > 0 ? 'pending' : 'all';
+
   // Testi çözen kullanıcı doğrudan kendi seviyesindeki kartlarla başlar.
   state.level = getPreferredLevels().length > 0 ? 'fit' : 'all';
 
@@ -250,12 +390,43 @@ export function openCategory(fieldId, categoryName) {
   showScreen('cards');
 }
 
+/**
+ * Alanlar arası bir tekrar seansı açar (anasayfadaki "günün tekrarı").
+ * @param {object[]} cards kart nesneleri (fieldId ve categoryName eklenmiş)
+ */
+export function openReviewDeck(cards) {
+  state.deckMode = 'review';
+  state.categoryName = null;
+  state.deck = [...cards];
+  state.cardIndex = 0;
+  state.deckIndexRef = 0;
+  state.deckFilter = 'all';
+  state.level = 'all';
+  resetCardView();
+
+  renderCards();
+  showScreen('cards');
+}
+
 function step(delta) {
+  // Hedef kartı listede *önce* belirle: "bugün çalışılacaklar" filtresi açıkken
+  // değerlendirilmiş kart listeden düşer ve aradaki indeksler kayar.
+  const target = visibleCards()[state.cardIndex + delta];
+
+  resetCardView();
+  state.deckIndexRef = -1; // önceki kartın filtre muafiyeti sona erdi
+
   const cards = visibleCards();
-  const next = state.cardIndex + delta;
-  if (next < 0 || next >= cards.length) return;
-  state.cardIndex = next;
-  state.flipped = false;
+  if (cards.length === 0) {
+    renderCard();
+    return;
+  }
+
+  const index = target ? cards.indexOf(target) : -1;
+  state.cardIndex = index !== -1
+    ? index
+    : Math.min(Math.max(state.cardIndex + delta, 0), cards.length - 1);
+
   renderCard();
 }
 
@@ -267,7 +438,7 @@ export function bindCardControls() {
     el.shuffleBtn.onclick = () => {
       shuffleArray(state.deck);
       state.cardIndex = 0;
-      state.flipped = false;
+      resetCardView();
       renderCards();
       toast('Deste karıştırıldı', '🔀');
     };
@@ -275,18 +446,31 @@ export function bindCardControls() {
 
   if (el.filterBtn) {
     el.filterBtn.onclick = () => {
-      state.onlyUnlearned = !state.onlyUnlearned;
+      state.deckFilter = state.deckFilter === 'pending' ? 'all' : 'pending';
       state.cardIndex = 0;
-      state.flipped = false;
+      resetCardView();
       renderCards();
     };
   }
 
-  // Klavye ile gezinme
+  // Klavye ile gezinme ve değerlendirme (1/2/3)
   document.addEventListener('keydown', (event) => {
     if (el.cardsScreen?.classList.contains('hidden')) return;
     if (event.target.matches('input, select, textarea')) return;
     if (event.key === 'ArrowLeft') step(-1);
     if (event.key === 'ArrowRight') step(1);
+
+    const gradeByKey = { 1: 'again', 2: 'hard', 3: 'good' }[event.key];
+    if (gradeByKey && !lastResult) {
+      if (gradeByKey === 'good' && state.peeked) return;
+      const card = visibleCards()[state.cardIndex];
+      if (card) handleGrade(card, gradeByKey);
+    }
   });
+}
+
+/** Quiz sonuçları SRS'i değiştirdiği için kart ekranına dönüşte tazelenir. */
+export function refreshCardView() {
+  resetCardView();
+  renderCards();
 }

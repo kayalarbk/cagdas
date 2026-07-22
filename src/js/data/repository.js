@@ -76,6 +76,41 @@ export function getFieldCards(fieldId) {
 }
 
 /**
+ * Bir kartın hangi alan ve kategoride olduğunu bulur.
+ * Tekrar seansında kartlar farklı alanlardan geldiği için kartın kendisi
+ * bağlamını taşımaz; bağlam yüklenmiş veriden okunur.
+ * @param {string} cardId
+ * @returns {{ fieldId: string, categoryName: string, category: object, card: object }|null}
+ */
+export function locateCard(cardId) {
+  for (const [fieldId, field] of loadedFields) {
+    for (const category of field.categories) {
+      const card = category.cards.find((item) => item.id === cardId);
+      if (card) return { fieldId, categoryName: category.name, category, card };
+    }
+  }
+  return null;
+}
+
+/**
+ * Verilen id'lere karşılık gelen kartlar (yüklenmiş alanlardan).
+ * Bulunamayan id'ler atlanır — veri güncellenmiş, kart kaldırılmış olabilir.
+ * @param {string[]} cardIds
+ */
+export function getCardsByIds(cardIds) {
+  const wanted = new Set(cardIds);
+  const found = [];
+  loadedFields.forEach((field) => {
+    field.categories.forEach((category) => {
+      category.cards.forEach((card) => {
+        if (wanted.has(card.id)) found.push(card);
+      });
+    });
+  });
+  return found;
+}
+
+/**
  * Kartın CEFR seviyesi. Tüm kartlarda `level` var; eski/eksik veriye karşı yedekli.
  * @param {object} card
  */

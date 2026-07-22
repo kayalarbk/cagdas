@@ -11,11 +11,19 @@ hukuk ve akademik İngilizce için ayrı alanlar içerir.
 - **Kişiselleştirme** — mesleki alanlar (mühendislik, tıp, ekonomi, hukuk, akademik) ve
   "sana uygun" seviye filtresi; istediğin zaman yeni alan ekleyip çıkarabilirsin
 - **Flashcard'lar** — karta dokun, İngilizce/Türkçe yüzler arasında çevir
+- **Aralıklı tekrar (Leitner)** — Türkçesini görmeden "hatırlamadım / zor / kolay"
+  dersin; kart kutular arasında gezer ve bir sonraki tekrar 1 · 3 · 7 · 16 · 35 gün
+  sonrasına planlanır. Cevaba önce bakarsan "kolay" seçeneği kapanır.
+- **Dört durum** — Yeni · Öğreniliyor · Pekişti · Kalıcı. Bir kart ancak ~2 hafta
+  arayla hatırlanmayı sürdürürse "kalıcı" sayılır; tek dokunuşla öğrenilmiş olmaz.
+- **Günün tekrarı** — anasayfada, tüm alanlardan vadesi gelmiş kartların tek destesi
 - **CEFR seviyeleri** — her kartta A1–B2 rozeti; kartlar ekranında seviye filtresi
 - **Telaffuz** — Web Speech API ile kelime ve örnek cümle seslendirme
-- **İlerleme takibi** — öğrenilen kartlar kalıcı id'leriyle `localStorage`'da saklanır
-- **Oyunlaştırma** — günlük hedef, seri (streak) ve XP
-- **Quiz modu** — boşluk doldurma ve anlam eşleştirme; çeldiriciler aynı seviyeden seçilir
+- **Oyunlaştırma** — günlük hedef (çalışılan kart sayısı), seri (streak) ve XP
+- **Quiz modu** — boşluk doldurma, anlam eşleştirme ve **yazma**; sonuçlar tekrar
+  kayıtlarını da günceller. Çoktan seçmeli doğru cevap kartı en fazla "Pekişti"ye
+  taşır — dört şıkta şansla bulmak kalıcılık kanıtı değildir; son adımı yazarak
+  bilmek ya da kartta "kolay" demek açar.
 
 ## Çalıştırma
 
@@ -49,7 +57,8 @@ Ardından tarayıcıdan `http://localhost:8000` adresini aç.
         ├── state.js            # Kartlar ekranının paylaşılan durumu
         ├── utils.js            # Karıştırma ve seslendirme yardımcıları
         ├── data/repository.js  # Manifest ve alan dosyalarının yüklenmesi
-        ├── store/              # localStorage: profil, ilgi alanları, ilerleme, istatistik
+        ├── store/              # localStorage: profil, ilgi alanları, SRS, istatistik
+        │   └── progress.js     # Aralıklı tekrar: kutu, vade, durum ve toplamlar
         ├── ui/                 # Üst bar ve bildirimler
         └── screens/            # onboarding · home · field · cards · quiz
 ```
@@ -67,6 +76,14 @@ npm run validate   # şema, id ve sayaç kontrolü
 
 Şema, id kuralları ve parti entegrasyon adımları için
 [docs/VERI-REHBERI.md](docs/VERI-REHBERI.md).
+
+## Veri Taşıma
+
+Eski sürümlerin ilerleme kayıtları açılışta otomatik taşınır: `de_learned_v2`
+(düz id listesi) ve daha eski `kartlar_learned_v1` (`"Kategori::kelime"`)
+kayıtları, 2. kutuda ve bugün vadesi gelmiş SRS kayıtlarına dönüşür. Yani eski
+"öğrendim" işaretleri kaybolmaz ama sıfırdan doğrulanır — ilk tekrar kartın
+gerçekten hatırlanıp hatırlanmadığını ortaya çıkarır.
 
 ## Tarayıcı Desteği
 

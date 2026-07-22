@@ -24,3 +24,12 @@ export function write(key, value) {
     /* gizli mod vb. durumlarda sessizce geç */
   }
 }
+
+/** Anahtarı siler. Eski biçimlerden taşıma sonrası temizlik için kullanılır. */
+export function remove(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    /* gizli mod vb. durumlarda sessizce geç */
+  }
+}

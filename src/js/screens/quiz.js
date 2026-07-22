@@ -1,25 +1,36 @@
 // Quiz ekranı.
-// İki soru tipi: 'blank' (boşluk doldurma) ve 'meaning' (Türkçe anlamdan
-// İngilizce kelime seçme). Karışık sırayla gelir.
+//
+// Üç soru tipi: 'blank' (boşluk doldurma), 'meaning' (Türkçe anlamdan İngilizce
+// kelime seçme) ve 'type' (Türkçeden İngilizceyi yazma). Karışık sırayla gelir.
+//
+// Quiz artık yalnız puan vermez, tekrar kayıtlarını da günceller: doğru cevap
+// kartı bir üst kutuya taşır, yanlış cevap sıfırlar. Çoktan seçmeli sorular
+// kartı SRS.recognitionMaxBox kutusunun üstüne çıkaramaz — dört şıkta şansla
+// doğru bulmak kalıcılık kanıtı değildir. Yazarak verilen doğru cevapta böyle
+// bir tavan yoktur.
 
-import { GAMIFICATION, QUIZ_LENGTH } from '../config.js';
+import { GAMIFICATION, QUIZ_LENGTH, SRS } from '../config.js';
 import { el } from '../dom.js';
 import { cardLevel, findCategory } from '../data/repository.js';
 import { state } from '../state.js';
-import { addXp } from '../store/stats.js';
-import { shuffleArray, speak } from '../utils.js';
+import { reviewCard } from '../store/progress.js';
+import { addXp, recordReview } from '../store/stats.js';
+import { normalizeAnswer, shuffleArray, speak } from '../utils.js';
 import { renderHeader } from '../ui/header.js';
+import { toast } from '../ui/toast.js';
 import { visibleCards } from './cards.js';
 import { showScreen } from './navigation.js';
 
 const quiz = {
-  /** @type {{ card: object, type: 'blank'|'meaning' }[]} */
+  /** @type {{ card: object, type: 'blank'|'meaning'|'type' }[]} */
   questions: [],
   index: 0,
   score: 0,
   answered: false,
   /** @type {object[]} yanlış yapılan kartlar */
   mistakes: [],
+  /** @type {object[]} bu turda kalıcı kutusuna ulaşan kartlar */
+  mastered: [],
   earnedXp: 0,
 };
 
@@ -89,6 +100,16 @@ function getDistractors(cards, correctCard) {
   return [...sameLevel, ...rest].slice(0, 3);
 }
 
+/**
+ * Kart yazma sorusuna uygun mu? Uzun öbekleri yazdırmak imla sınavına döner;
+ * üretim testi kısa kelime ve kalıplarla sınırlı tutulur. Veri setindeki
+ * kalıpların çoğu üç sözcüklü ("set the agenda") olduğu için sınır uzunlukta.
+ */
+function isTypeable(card) {
+  const text = card.en.trim();
+  return text.split(/\s+/).length <= 3 && text.length <= 20;
+}
+
 /** Aktif kategoriden bir quiz turu başlatır. */
 export function startQuiz() {
   const category = findCategory(state.fieldId, state.categoryName);
@@ -101,17 +122,19 @@ export function startQuiz() {
   const pool = shuffleArray([...source]);
   const selected = pool.slice(0, Math.min(QUIZ_LENGTH, pool.length));
 
-  // Soru tiplerini karışık ata: yarısı blank, yarısı meaning
-  quiz.questions = selected.map((card, i) => ({
-    card,
-    type: i % 2 === 0 ? 'blank' : 'meaning',
-  }));
+  // Soru tiplerini sırayla dağıt: boşluk · anlam · yazma.
+  const rotation = ['blank', 'meaning', 'type'];
+  quiz.questions = selected.map((card, i) => {
+    const type = rotation[i % rotation.length];
+    return { card, type: type === 'type' && !isTypeable(card) ? 'meaning' : type };
+  });
   shuffleArray(quiz.questions);
 
   quizPool = pool;
   quiz.index = 0;
   quiz.score = 0;
   quiz.mistakes = [];
+  quiz.mastered = [];
   quiz.earnedXp = 0;
 
   el.quizQuestionArea?.classList.remove('hidden');
@@ -140,11 +163,26 @@ function renderQuizQuestion() {
       el.quizHint.textContent = `İpucu: ${card.trS}`;
       el.quizHint.classList.remove('hidden');
     }
+  } else if (type === 'type') {
+    el.quizSentence.textContent = `"${card.tr}" — İngilizcesini yaz`;
+    if (el.quizHint) {
+      el.quizHint.textContent = `İpucu: ${card.trS}`;
+      el.quizHint.classList.remove('hidden');
+    }
   } else {
     el.quizSentence.textContent = `"${card.tr}" anlamına gelen kelime hangisi?`;
     el.quizHint?.classList.add('hidden');
   }
 
+  el.quizNextBtn?.classList.add('hidden');
+
+  if (type === 'type') {
+    renderTypeAnswer(card);
+    return;
+  }
+
+  el.quizTypeForm?.classList.add('hidden');
+  el.quizOptions.classList.remove('hidden');
   const options = shuffleArray([card, ...getDistractors(quizPool, card)]);
   el.quizOptions.innerHTML = '';
   options.forEach((option) => {
@@ -155,8 +193,92 @@ function renderQuizQuestion() {
     btn.onclick = () => handleAnswer(btn, option, card);
     el.quizOptions.appendChild(btn);
   });
+}
 
-  el.quizNextBtn?.classList.add('hidden');
+/** Yazma sorusunun giriş alanını hazırlar. */
+function renderTypeAnswer(card) {
+  el.quizOptions.innerHTML = '';
+  el.quizOptions.classList.add('hidden');
+  el.quizTypeForm?.classList.remove('hidden');
+  el.quizTypeFeedback?.classList.add('hidden');
+
+  if (el.quizTypeInput) {
+    el.quizTypeInput.value = '';
+    el.quizTypeInput.disabled = false;
+    el.quizTypeInput.className = 'quiz-type-input';
+    el.quizTypeInput.focus();
+  }
+  if (el.quizTypeSubmit) el.quizTypeSubmit.disabled = false;
+}
+
+/** Yazma sorusunun cevabını değerlendirir. */
+export function submitTypedAnswer() {
+  if (quiz.answered) return;
+  const question = quiz.questions[quiz.index];
+  if (!question || question.type !== 'type') return;
+
+  const typed = el.quizTypeInput?.value ?? '';
+  if (!normalizeAnswer(typed)) return; // boş cevap gönderilmez
+
+  quiz.answered = true;
+  const correct = normalizeAnswer(typed) === normalizeAnswer(question.card.en);
+
+  if (el.quizTypeInput) {
+    el.quizTypeInput.disabled = true;
+    el.quizTypeInput.classList.add(correct ? 'is-correct' : 'is-wrong');
+  }
+  if (el.quizTypeSubmit) el.quizTypeSubmit.disabled = true;
+
+  if (el.quizTypeFeedback) {
+    el.quizTypeFeedback.classList.remove('hidden');
+    el.quizTypeFeedback.className = `quiz-type-feedback ${correct ? 'is-correct' : 'is-wrong'}`;
+    el.quizTypeFeedback.textContent = correct
+      ? `Doğru — ${question.card.en}`
+      : `Doğrusu: ${question.card.en}`;
+  }
+
+  speak(question.card.en);
+  // Yazarak bilmek üretimdir; tanıma tavanı uygulanmaz.
+  applyQuizResult(question.card, correct, { recognition: false });
+
+  if (correct) {
+    setTimeout(advanceQuiz, CORRECT_DELAY_MS);
+  } else {
+    el.quizNextBtn?.classList.remove('hidden');
+  }
+}
+
+/**
+ * Quiz cevabını tekrar kaydına ve istatistiklere işler.
+ * @param {object} card
+ * @param {boolean} correct
+ * @param {{ recognition: boolean }} options tanıma sorusuysa kutu tavanı uygulanır
+ */
+function applyQuizResult(card, correct, { recognition }) {
+  const grade = correct ? 'good' : 'again';
+  const result = reviewCard(card, grade, {
+    maxBox: recognition ? SRS.recognitionMaxBox : undefined,
+  });
+
+  // Tekrar puanı (ve kalıcılık ikramiyesi) stats tarafından hesaplanır; quiz
+  // yalnız doğru cevap primini ekler.
+  const { xp } = recordReview(card, grade, result);
+  quiz.earnedXp += xp;
+
+  if (correct) {
+    quiz.score++;
+    quiz.earnedXp += GAMIFICATION.xpPerCorrectAnswer;
+    addXp(GAMIFICATION.xpPerCorrectAnswer);
+  } else {
+    quiz.mistakes.push(card);
+  }
+
+  if (result.justMastered) {
+    quiz.mastered.push(card);
+    toast('Bir kelime daha kalıcı!', '🏆');
+  }
+
+  renderHeader();
 }
 
 function handleAnswer(btn, chosen, correctCard) {
@@ -169,16 +291,13 @@ function handleAnswer(btn, chosen, correctCard) {
 
   if (chosen.en === correctCard.en) {
     btn.classList.add('is-correct');
-    quiz.score++;
-    quiz.earnedXp += GAMIFICATION.xpPerCorrectAnswer;
-    addXp(GAMIFICATION.xpPerCorrectAnswer);
-    renderHeader();
+    applyQuizResult(correctCard, true, { recognition: true });
     setTimeout(advanceQuiz, CORRECT_DELAY_MS);
     return;
   }
 
   btn.classList.add('is-wrong');
-  quiz.mistakes.push(correctCard);
+  applyQuizResult(correctCard, false, { recognition: true });
   allBtns.forEach((option) => {
     if (option.textContent === correctCard.en) {
       option.classList.add('is-correct');
@@ -218,7 +337,10 @@ function showResult() {
   if (el.quizResultEmoji) el.quizResultEmoji.textContent = emoji;
   if (el.quizResultTitle) el.quizResultTitle.textContent = title;
   if (el.quizResultText) {
-    el.quizResultText.textContent = `${total} soruda ${quiz.score} doğru.`;
+    const mastered = quiz.mastered.length;
+    el.quizResultText.textContent =
+      `${total} soruda ${quiz.score} doğru.` +
+      (mastered > 0 ? ` ${mastered} kelime kalıcı oldu.` : '');
   }
   if (el.quizResultXp) el.quizResultXp.textContent = `+${quiz.earnedXp} puan`;
   if (el.quizFill) el.quizFill.style.width = '100%';
@@ -229,9 +351,11 @@ function showResult() {
     el.quizMistakes.classList.add('hidden');
     return;
   }
+
+  // Yanlış yapılan kartlar 0. kutuya düştüğü için yarın değil bugün tekrar gelir.
   el.quizMistakes.classList.remove('hidden');
   el.quizMistakes.innerHTML =
-    '<div class="result-mistakes-title">Tekrar çalışman gereken kelimeler</div>' +
+    '<div class="result-mistakes-title">Bu kelimeler tekrar kuyruğuna alındı</div>' +
     quiz.mistakes
       .map(
         (card) =>

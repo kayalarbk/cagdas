@@ -1,13 +1,20 @@
 // Anasayfa: günlük hedef, seri ve seçili alanların ilerlemesi.
 
 import { el } from '../dom.js';
-import { getFieldMeta, getFields } from '../data/repository.js';
+import { getCardsByIds, getFieldMeta, getFields, loadField } from '../data/repository.js';
 import { getInterests, setInterests } from '../store/interests.js';
 import { getLevelChoice, getProfileMeta, getRecommendedFields } from '../store/profile.js';
-import { getFieldProgress } from '../store/progress.js';
+import {
+  countDue,
+  getDueIdsByField,
+  getFieldProgress,
+  migrateLegacyProgress,
+} from '../store/progress.js';
 import { getStats, setDailyGoal } from '../store/stats.js';
+import { shuffleArray } from '../utils.js';
 import { renderHeader } from '../ui/header.js';
 import { toast } from '../ui/toast.js';
+import { openReviewDeck } from './cards.js';
 import { openField } from './field.js';
 import { showScreen } from './navigation.js';
 
@@ -50,6 +57,14 @@ function renderGreeting(stats) {
   if (el.greetingTitle) el.greetingTitle.textContent = greetingForHour(new Date().getHours());
 
   if (!el.greetingSub) return;
+
+  // Tekrar borcu her şeyin önüne geçer: unutma eğrisi bekleyeni affetmiyor.
+  const due = countDue(getInterests());
+  if (due > 0) {
+    el.greetingSub.textContent = `${due} kart tekrarını bekliyor.`;
+    return;
+  }
+
   if (stats.goalReached) {
     el.greetingSub.textContent = 'Bugünün hedefini tamamladın. Devam edebilirsin!';
   } else if (stats.streak > 0) {
@@ -76,33 +91,102 @@ function renderGoal(stats) {
 
   if (el.goalText) {
     const remaining = Math.max(0, stats.dailyGoal - stats.todayCount);
+    const mastered = stats.todayMastered > 0
+      ? ` Bugün ${stats.todayMastered} kelime kalıcı oldu.`
+      : '';
     el.goalText.textContent = stats.goalReached
-      ? 'Hedef tamam! 🎉 Fazlası her zaman iyidir.'
-      : `${remaining} kelime kaldı.`;
+      ? `Hedef tamam! 🎉${mastered}`
+      : `${remaining} kart kaldı.${mastered}`;
+  }
+}
+
+/**
+ * Tekrar kuyruğu kartı: bugün vadesi gelmiş kartların sayısı.
+ * Kuyruk boşsa kart gizlenir — "borcun yok" mesajı yeni kelimeye yönlendirir.
+ */
+function renderDueCard() {
+  if (!el.dueCard) return;
+
+  const due = getDueIdsByField(getInterests());
+  const count = Object.values(due).reduce((sum, ids) => sum + ids.length, 0);
+
+  el.dueCard.classList.toggle('hidden', count === 0);
+  if (count === 0) return;
+
+  const fieldCount = Object.keys(due).length;
+  if (el.dueCount) el.dueCount.textContent = String(count);
+  if (el.dueText) {
+    el.dueText.textContent =
+      fieldCount > 1
+        ? `${fieldCount} alandan toplandı. Unutmadan önce yakala.`
+        : 'Unutma eğrisi bugün bu kartlardan geçiyor.';
+  }
+  if (el.dueStartBtn) el.dueStartBtn.disabled = false;
+}
+
+/**
+ * Tekrar seansını başlatır: vadesi gelmiş kartların alanlarını indirir,
+ * hepsini tek bir destede toplar ve kartlar ekranını açar.
+ */
+async function startReviewSession() {
+  const grouped = getDueIdsByField(getInterests());
+  const fieldIds = Object.keys(grouped);
+  if (fieldIds.length === 0) return;
+
+  if (el.dueStartBtn) {
+    el.dueStartBtn.disabled = true;
+    el.dueStartBtn.textContent = 'Hazırlanıyor…';
+  }
+
+  try {
+    const fields = await Promise.all(fieldIds.map((id) => loadField(id)));
+    fields.forEach(migrateLegacyProgress);
+
+    const allIds = fieldIds.flatMap((id) => grouped[id]);
+    const cards = shuffleArray(getCardsByIds(allIds));
+
+    if (cards.length === 0) {
+      toast('Tekrar edilecek kart bulunamadı', '🤔');
+      return;
+    }
+    openReviewDeck(cards);
+  } catch (error) {
+    console.error(error);
+    toast('Tekrar listesi yüklenemedi', '⚠️');
+  } finally {
+    if (el.dueStartBtn) {
+      el.dueStartBtn.disabled = false;
+      el.dueStartBtn.textContent = 'Tekrara başla';
+    }
   }
 }
 
 /** Bir alan satırı oluşturur. `muted` keşfet listesi içindir. */
 function fieldRow(meta, { muted = false, recommended = false } = {}) {
-  const { learned, total, pct } = getFieldProgress(meta.id);
+  const { learned, total, pct, startedPct, due } = getFieldProgress(meta.id);
 
   const row = document.createElement('button');
   row.type = 'button';
   row.className = 'field-row';
   row.style.setProperty('--row-color', meta.color);
+  // İki katmanlı çubuk: soluk kısım çalışılmaya başlananlar, dolu kısım kalıcılar.
   row.innerHTML = `
     <span class="field-row-icon" aria-hidden="true">${meta.icon}</span>
     <span class="field-row-body">
       <span class="field-row-name">
         ${meta.name}
         ${pct === 100 ? '<span class="field-row-done">✓ tamam</span>' : ''}
+        ${due > 0 ? `<span class="field-row-due">${due} tekrar</span>` : ''}
         ${recommended ? '<span class="field-row-tag">sana uygun</span>' : ''}
       </span>
       <span class="field-row-meta">
         ${
           muted
             ? `<span class="field-row-pct">${total} kelime</span>`
-            : `<span class="progress-track"><span class="progress-fill" style="width:${pct}%"></span></span>
+            : `<span class="progress-track">
+                 <span class="progress-ghost" style="width:${startedPct}%"></span>
+                 <span class="progress-fill" style="width:${pct}%"></span>
+               </span>
                <span class="field-row-pct">%${pct}</span>`
         }
       </span>
@@ -110,7 +194,10 @@ function fieldRow(meta, { muted = false, recommended = false } = {}) {
   `;
   row.setAttribute(
     'aria-label',
-    muted ? `${meta.name}, ${total} kelime` : `${meta.name}, ${learned} / ${total} öğrenildi`
+    muted
+      ? `${meta.name}, ${total} kelime`
+      : `${meta.name}, ${learned} / ${total} kalıcı` +
+        (due > 0 ? `, ${due} kart tekrar bekliyor` : '')
   );
   row.onclick = () => openField(meta.id);
   if (!muted) return row;
@@ -180,6 +267,7 @@ export function renderHome() {
   const stats = getStats();
   renderProfileChip();
   renderGreeting(stats);
+  renderDueCard();
   renderGoal(stats);
   renderFieldLists();
   renderHeader();
@@ -208,6 +296,7 @@ export function bindHome(onEditInterests, onRetakeQuiz) {
     };
   }
 
+  if (el.dueStartBtn) el.dueStartBtn.onclick = startReviewSession;
   if (el.editInterestsBtn) el.editInterestsBtn.onclick = onEditInterests;
   if (el.profileChip) el.profileChip.onclick = onRetakeQuiz;
 
